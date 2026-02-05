@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  greengrass-lite:
+    image: greengrass-lite-container:latest
+    container_name: greengrass-lite
+    volumes:
+      - /var/snap/greengrass-lite-container/current/docker-volumes/etc-greengrass:/etc/greengrass
+      - /var/snap/greengrass-lite-container/current/docker-volumes/var-lib-greengrass:/var/lib/greengrass
+      - /var/snap/greengrass-lite-container/current/docker-volumes/opt-greengrass-components:/opt/aws/iot/greengrass/components
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
+    tmpfs:
+      - /run
+      - /run/lock
+    restart: unless-stopped

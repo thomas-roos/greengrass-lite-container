@@ -1,6 +1,6 @@
 {
     "version": "1.0",
-    "description": "Simple docker webservice example using Yocto",
+    "description": "Multi-layer multi-arch Greengrass Lite container using Yocto",
     "sources": {
         "bitbake": {
             "git-remote": {
@@ -57,17 +57,29 @@
                         "uri": "git://git.yoctoproject.org/meta-virtualization;protocol=https"
                     }
                 },
-                "branch": "whinlatter",
-                "rev": "8f03a0cc8950ef5d5e4f11d9ae494946d1991e45"
+                "branch": "container-cross-install",
+                "rev": "24c604854c6ffe79ac7973e333b2df7f7f82ddd9"
             },
             "path": "meta-virtualization"
+        },
+        "meta-aws": {
+            "git-remote": {
+                "remotes": {
+                    "origin": {
+                        "uri": "https://github.com/aws/meta-aws.git"
+                    }
+                },
+                "branch": "master",
+                "rev": "3c676e58c8811690845676a473a44a835b76d0f1"
+            },
+            "path": "meta-aws"
         }
     },
     "bitbake-setup": {
         "configurations": [
             {
-                "name": "docker-ex",
-                "description": "docker example for minimal webservice",
+                "name": "greengrass-lite-container",
+                "description": "Multi-layer multi-arch Greengrass Lite container",
                 "bb-layers": [
                     "openembedded-core/meta",
                     "meta-yocto/meta-poky",
@@ -75,12 +87,14 @@
                     "meta-openembedded/meta-filesystems",
                     "meta-openembedded/meta-python",
                     "meta-openembedded/meta-networking",
-                    "meta-virtualization"
+                    "meta-openembedded/meta-multimedia",
+                    "meta-virtualization",
+                    "meta-aws"
                 ],
                 "bb-layers-file-relative": [
                     "meta-application"
                 ],
-				"oe-fragments": ["core/yocto/sstate-mirror-cdn", "application/docker-ex"],
+				"oe-fragments": ["core/yocto/sstate-mirror-cdn", "application/greengrass-lite-container"],
                 "oe-fragments-one-of": {
                     "machine": {
                         "description": "Target machine architecture",
