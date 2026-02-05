@@ -73,7 +73,7 @@ Multi-layer OCI container with AWS Greengrass Lite and systemd, built using Yoct
 5. **Start container:**
    ```bash
    docker-compose up -d
-   # or
+   # or for podman
    podman-compose up -d
    ```
 
