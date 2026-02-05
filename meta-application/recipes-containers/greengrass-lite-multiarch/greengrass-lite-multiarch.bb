@@ -6,7 +6,4 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384
 inherit oci-multiarch
 
 OCI_MULTIARCH_RECIPE = "greengrass-lite-2layer"
-OCI_MULTIARCH_PLATFORMS = "x86_64"
-
-# Override to use main build for aarch64 (since we're building on ARM64 host)
-OCI_MULTIARCH_MC[x86_64] = "vruntime-x86-64"
+OCI_MULTIARCH_PLATFORMS = "aarch64 x86_64"
