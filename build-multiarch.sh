@@ -1,19 +1,10 @@
 #!/bin/bash
 set -e
 
-REGISTRY="${1:-docker.io/library}"
-IMAGE_NAME="${2:-greengrass-lite-2layer}"
-TAG="${3:-latest}"
+IMAGE_NAME="${1:-greengrass-lite-2layer}"
+TAG="${2:-latest}"
 
-if [ "$REGISTRY" = "docker.io/library" ]; then
-    echo "Usage: $0 <registry> [image-name] [tag]"
-    echo ""
-    echo "Example: $0 docker.io/myuser greengrass-lite-2layer v1"
-    echo "         $0 ghcr.io/myorg greengrass-lite-2layer latest"
-    exit 1
-fi
-
-echo "Building multi-arch manifest for: $REGISTRY/$IMAGE_NAME:$TAG"
+echo "Creating multi-arch OCI image: $IMAGE_NAME:$TAG"
 echo ""
 
 BUILD_DIR="/home/ubuntu/data/greengrass-lite-container/bitbake-builds/bitbake-setup-greengrass-lite-container-distro_poky-machine_qemuarm64/build"
@@ -31,23 +22,24 @@ X86_TAR="$BUILD_DIR/tmp-vruntime-x86-64/deploy/images/qemux86-64/greengrass-lite
 echo "ARM64 image: $ARM64_TAR"
 echo "x86-64 image: $X86_TAR"
 
-# Push ARM64
-echo "==> Pushing ARM64..."
-skopeo copy oci-archive:$ARM64_TAR docker://$REGISTRY/$IMAGE_NAME:$TAG-arm64
+# Load both images to local storage
+echo "==> Loading images to local storage..."
+skopeo copy oci-archive:$ARM64_TAR containers-storage:localhost/$IMAGE_NAME:$TAG-arm64
+skopeo copy oci-archive:$X86_TAR containers-storage:localhost/$IMAGE_NAME:$TAG-amd64
 
-# Push x86-64
-echo "==> Pushing x86-64..."
-skopeo copy oci-archive:$X86_TAR docker://$REGISTRY/$IMAGE_NAME:$TAG-amd64
-
-# Create manifest
+# Create multi-arch manifest
 echo "==> Creating multi-arch manifest..."
-docker manifest create $REGISTRY/$IMAGE_NAME:$TAG \
-    --amend $REGISTRY/$IMAGE_NAME:$TAG-arm64 \
-    --amend $REGISTRY/$IMAGE_NAME:$TAG-amd64
-
-docker manifest push $REGISTRY/$IMAGE_NAME:$TAG
+podman manifest create $IMAGE_NAME:$TAG
+podman manifest add $IMAGE_NAME:$TAG containers-storage:localhost/$IMAGE_NAME:$TAG-arm64
+podman manifest add $IMAGE_NAME:$TAG containers-storage:localhost/$IMAGE_NAME:$TAG-amd64
 
 echo ""
-echo "✅ Multi-arch manifest created: $REGISTRY/$IMAGE_NAME:$TAG"
-echo "   - linux/arm64"
-echo "   - linux/amd64"
+echo "✅ Multi-arch manifest created: $IMAGE_NAME:$TAG"
+podman manifest inspect $IMAGE_NAME:$TAG | grep -E "architecture|os" | head -10
+
+echo ""
+echo "To push to registry:"
+echo "  podman manifest push $IMAGE_NAME:$TAG docker://registry.example.com/$IMAGE_NAME:$TAG"
+echo ""
+echo "To use locally:"
+echo "  podman run --rm $IMAGE_NAME:$TAG uname -m"
