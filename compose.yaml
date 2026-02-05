@@ -3,15 +3,10 @@ services:
     image: greengrass-lite-2layer:v5
     container_name: greengrass-lite
     restart: unless-stopped
-    privileged: false
-    cap_add:
-      - SYS_ADMIN
-    security_opt:
-      - seccomp=unconfined
+    privileged: true
     volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:rw
-      - ./volumes/etc-greengrass:/etc/greengrass:Z
-      - ./volumes/var-lib-greengrass:/var/lib/greengrass:Z
+      - ./volumes/etc-greengrass:/etc/greengrass
+      - ./volumes/var-lib-greengrass:/var/lib/greengrass
     tmpfs:
       - /run
       - /run/lock

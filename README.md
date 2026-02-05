@@ -53,13 +53,14 @@ The `setup.sh` script extracts your AWS IoT connection kit and configures:
 
 ## Container Runtime
 
-**Podman (Recommended):**
+**Docker and Podman both supported:**
 ```bash
+docker compose up -d
+# or
 podman compose up -d
 ```
 
-**Docker:**
-May have systemd initialization issues. Use Podman for production.
+**Key requirement:** Use `--privileged` mode for systemd to manage cgroups properly.
 
 ## Verification
 
