@@ -4,3 +4,4 @@ tmp/
 sstate-cache/
 downloads/
 cache/
+volumes/
