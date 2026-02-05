@@ -77,6 +77,20 @@ podman compose up -d
 
 **Key requirement:** Use `--privileged` mode for systemd to manage cgroups properly.
 
+## Push to GitHub Container Registry
+
+1. **Authenticate with GitHub:**
+   ```bash
+   echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+   ```
+
+2. **Push the multi-arch image:**
+   ```bash
+   ./push-to-registry.sh ghcr.io USERNAME/greengrass-lite latest
+   ```
+
+The image will be available at: `ghcr.io/USERNAME/greengrass-lite:latest`
+
 ## Verification
 
 ```bash
