@@ -4,6 +4,8 @@ Multi-layer OCI container with AWS Greengrass Lite and systemd, built using Yoct
 
 ## Quick Start
 
+### On Build System
+
 1. **Build the image:**
    ```bash
    bitbake-setup init
@@ -40,6 +42,39 @@ Multi-layer OCI container with AWS Greengrass Lite and systemd, built using Yoct
 5. **Start container:**
    ```bash
    docker-compose up -d
+   ```
+
+### On Target System (Using Pre-built Image)
+
+1. **Download setup files:**
+   ```bash
+   curl -O https://raw.githubusercontent.com/thomas-roos/greengrass-lite-container/master/setup.sh
+   curl -O https://raw.githubusercontent.com/thomas-roos/greengrass-lite-container/master/compose.yaml
+   chmod +x setup.sh
+   ```
+
+2. **Pull the image:**
+   ```bash
+   docker pull ghcr.io/thomas-roos/greengrass-lite:latest
+   # or
+   podman pull ghcr.io/thomas-roos/greengrass-lite:latest
+   ```
+
+3. **Setup with your connection kit:**
+   ```bash
+   ./setup.sh connectionKit.zip
+   ```
+
+4. **Update compose.yaml to use the registry image:**
+   ```bash
+   sed -i 's|image:.*|image: ghcr.io/thomas-roos/greengrass-lite:latest|' compose.yaml
+   ```
+
+5. **Start container:**
+   ```bash
+   docker-compose up -d
+   # or
+   podman-compose up -d
    ```
 
 ## Architecture
