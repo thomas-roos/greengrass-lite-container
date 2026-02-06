@@ -84,6 +84,11 @@ Multi-layer OCI container with AWS Greengrass Lite and systemd, built using Yoct
 - Application layer updates are small (32MB)
 - Shared base across multiple containers
 
+**C Library:**
+- Uses **glibc** (GNU C Library) for maximum compatibility
+- Supports pre-built binaries and third-party Greengrass components
+- Most AWS and community components expect glibc
+
 ## Configuration
 
 **Volumes:**
