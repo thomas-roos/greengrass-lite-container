@@ -9,7 +9,7 @@ OCI_LAYER_MODE = "multi"
 # 2 layers: systemd base (with usrmerge-compat) + greengrass app
 OCI_LAYERS = "\
     systemd:packages:usrmerge-compat+base-files+base-passwd+netbase+systemd+systemd-serialgetty+libcgroup+ca-certificates \
-    greengrass:packages:greengrass-lite \
+    greengrass:packages:greengrass-lite+podman \
 "
 
 # Use standard paths with usrmerge
