@@ -20,7 +20,7 @@ fi
 echo "==> Building ARM64 and x86-64..."
 cd "$SCRIPT_DIR"
 . $BUILD_DIR/init-build-env
-bitbake greengrass-lite-2layer
+bitbake multiconfig:vruntime-aarch64:greengrass-lite-2layer
 bitbake multiconfig:vruntime-x86-64:greengrass-lite-2layer
 
 ARM64_OCI="$BUILD_DIR/tmp-vruntime-aarch64/deploy/images/qemuarm64/greengrass-lite-2layer-latest-oci"
