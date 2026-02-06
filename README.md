@@ -25,7 +25,13 @@ sudo apt-get install podman buildah skopeo
 
 1. **Build the image:**
    ```bash
-   bitbake-setup init
+   cd /path/to/bitbake/bin
+   ./bitbake-setup --setting default top-dir-prefix $PWD/../../greengrass-lite-container init \
+     $PWD/../../greengrass-lite-container/bitbake-setup.conf.json \
+     greengrass-lite-container machine/qemuarm64 distro/poky application/greengrass-lite-container \
+     --non-interactive
+   
+   cd ../../greengrass-lite-container
    . ./bitbake-builds/bitbake-setup-greengrass-lite-container-distro_poky-machine_qemuarm64/build/init-build-env
    bitbake greengrass-lite-2layer
    ```
