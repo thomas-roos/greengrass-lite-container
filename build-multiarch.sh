@@ -16,30 +16,16 @@ if [ ! -d "$BUILD_DIR" ]; then
     exit 1
 fi
 
-# Build both architectures
-echo "==> Building ARM64 and x86-64..."
+# Build multi-arch image (both architectures)
+echo "==> Building multi-arch image..."
 cd "$SCRIPT_DIR"
 . $BUILD_DIR/init-build-env
-bitbake multiconfig:vruntime-aarch64:greengrass-lite-2layer
-bitbake multiconfig:vruntime-x86-64:greengrass-lite-2layer
+bitbake greengrass-lite-multiarch
 
-ARM64_OCI="$BUILD_DIR/tmp-vruntime-aarch64/deploy/images/qemuarm64/greengrass-lite-2layer-latest-oci"
-X86_OCI="$BUILD_DIR/tmp-vruntime-x86-64/deploy/images/qemux86-64/greengrass-lite-2layer-latest-oci"
-
-echo "ARM64 OCI: $ARM64_OCI"
-echo "x86-64 OCI: $X86_OCI"
-
-# Create multi-arch manifest using buildah
-echo "==> Creating multi-arch manifest..."
-buildah manifest rm $IMAGE_NAME:$TAG 2>/dev/null || true
-buildah manifest create $IMAGE_NAME:$TAG
-buildah manifest add $IMAGE_NAME:$TAG oci:$ARM64_OCI
-buildah manifest add $IMAGE_NAME:$TAG oci:$X86_OCI
+MULTIARCH_OCI="$BUILD_DIR/tmp/deploy/images/qemuarm64/greengrass-lite-multiarch-multiarch-oci"
 
 echo ""
-echo "✅ Multi-arch manifest created: $IMAGE_NAME:$TAG"
-buildah manifest inspect $IMAGE_NAME:$TAG | grep -E "architecture|os" | head -10
-
+echo "✅ Multi-arch OCI image created: $MULTIARCH_OCI"
 echo ""
 echo "To push to registry:"
-echo "  buildah manifest push --all $IMAGE_NAME:$TAG docker://ghcr.io/YOUR_USERNAME/$IMAGE_NAME:$TAG"
+echo "  skopeo copy --all oci:$MULTIARCH_OCI docker://ghcr.io/YOUR_USERNAME/$IMAGE_NAME:$TAG"

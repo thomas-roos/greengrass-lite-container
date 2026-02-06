@@ -33,9 +33,8 @@ sudo apt-get install podman buildah skopeo
 2. **Build multi-arch (ARM64 + x86-64):**
    ```bash
    # Multi-arch is already enabled in the fragment
-   # Build both architectures via multiconfig
-   bitbake multiconfig:vruntime-aarch64:greengrass-lite-2layer
-   bitbake multiconfig:vruntime-x86-64:greengrass-lite-2layer
+   # This builds both architectures and creates the OCI Image Index
+   bitbake greengrass-lite-multiarch
    ```
 
 3. **Create multi-arch manifest and push to registry:**

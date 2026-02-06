@@ -58,7 +58,7 @@
                     }
                 },
                 "branch": "container-cross-install",
-                "rev": "24c604854c6ffe79ac7973e333b2df7f7f82ddd9"
+                "rev": "02bce5b72e8725ba58d82627c780e376ac59a84b"
             },
             "path": "meta-virtualization"
         },
