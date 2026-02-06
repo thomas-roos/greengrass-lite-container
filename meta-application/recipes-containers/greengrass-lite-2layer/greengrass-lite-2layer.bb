@@ -94,6 +94,12 @@ python oci_layer_postprocess() {
                 if not os.path.exists(service_link):
                     os.symlink('/dev/null', service_link)
                     bb.note(f"OCI: Masked service {service}")
+            
+            # Remove /etc/resolv.conf if it exists (let container runtime manage it)
+            resolv_conf = os.path.join(layer_rootfs, 'etc/resolv.conf')
+            if os.path.exists(resolv_conf):
+                os.remove(resolv_conf)
+                bb.note(f"OCI: Removed /etc/resolv.conf from layer '{layer_name}'")
 }
 
 # Run after oci_multilayer_install_packages
