@@ -32,18 +32,12 @@ sudo apt-get install podman buildah skopeo
 
 2. **Build multi-arch (ARM64 + x86-64):**
    ```bash
-   # Multi-arch is already enabled in the fragment
-   # This builds both architectures and creates the OCI Image Index
    bitbake greengrass-lite-multiarch
    ```
 
-3. **Create multi-arch manifest and push to registry:**
+3. **Push to registry:**
    ```bash
-   # Use the build-multiarch.sh script
-   ./build-multiarch.sh greengrass-lite latest
-   
-   # Push to your registry
-   ./push-to-registry.sh ghcr.io YOUR_USERNAME/greengrass-lite latest
+   ./push-to-registry.sh ghcr.io YOUR_USERNAME/greengrass-lite latest YOUR_USERNAME/greengrass-lite-container
    ```
 
 4. **Setup with your AWS IoT connection kit:**
