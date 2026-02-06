@@ -2,6 +2,23 @@
 
 Multi-layer OCI container with AWS Greengrass Lite and systemd, built using Yocto and meta-virtualization.
 
+## Prerequisites
+
+**For building:**
+- Yocto build dependencies (see [Yocto Quick Start](https://docs.yoctoproject.org/brief-yoctoprojectqs/index.html))
+- `buildah` or `podman` for multi-arch manifest creation
+- `skopeo` for OCI image operations
+
+**For running:**
+- `docker` or `podman`
+- `docker-compose` or `podman-compose` (optional)
+
+**Install on Ubuntu/Debian:**
+```bash
+sudo apt-get update
+sudo apt-get install podman buildah skopeo
+```
+
 ## Quick Start
 
 ### On Build System
