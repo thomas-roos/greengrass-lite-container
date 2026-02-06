@@ -93,6 +93,17 @@ sudo apt-get install podman buildah skopeo
    docker rm -f greengrass-lite
    ```
 
+5. **Debug logs:**
+   ```bash
+   # Follow all logs
+   podman exec greengrass-lite journalctl -f
+   # or
+   docker exec greengrass-lite journalctl -f
+   
+   # Check Greengrass service status
+   podman exec greengrass-lite systemctl status ggl.core.iotcored.service
+   ```
+
 ## Architecture
 
 **2-Layer Design:**
