@@ -81,8 +81,17 @@ sudo apt-get install podman buildah skopeo
    ```bash
    sed -i 's|image:.*|image: greengrass-lite-2layer:latest|' compose.yaml
    ```
-   # or for podman
-   podman-compose up -d
+
+4. **Stop container:**
+   ```bash
+   docker-compose down
+   # or
+   podman-compose down
+   
+   # Force stop if hanging:
+   podman rm -f greengrass-lite
+   # or
+   docker rm -f greengrass-lite
    ```
 
 ## Architecture
