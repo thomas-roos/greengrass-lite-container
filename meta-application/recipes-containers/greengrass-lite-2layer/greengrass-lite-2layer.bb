@@ -34,6 +34,7 @@ IMAGE_INSTALL = "\
     libcgroup \
     ca-certificates \
     greengrass-lite \
+    podman \
 "
 
 PACKAGECONFIG:pn-greengrass-lite = ""
