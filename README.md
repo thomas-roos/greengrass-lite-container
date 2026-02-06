@@ -21,15 +21,13 @@ Multi-layer OCI container with AWS Greengrass Lite and systemd, built using Yoct
    bitbake multiconfig:vruntime-x86-64:greengrass-lite-2layer
    ```
 
-3. **Load to Docker/Podman:**
+3. **Create multi-arch manifest and push to registry:**
    ```bash
-   # ARM64
-   skopeo copy oci-archive:tmp/deploy/images/qemuarm64/greengrass-lite-2layer-latest-oci.tar \
-     containers-storage:greengrass-lite-2layer:v5
+   # Use the build-multiarch.sh script
+   ./build-multiarch.sh greengrass-lite latest
    
-   # x86-64
-   skopeo copy oci-archive:tmp-vruntime-x86-64/deploy/images/qemux86-64/greengrass-lite-2layer-latest-oci.tar \
-     containers-storage:greengrass-lite-2layer:v5-amd64
+   # Push to your registry
+   ./push-to-registry.sh ghcr.io YOUR_USERNAME/greengrass-lite latest
    ```
 
 4. **Setup with your AWS IoT connection kit:**
