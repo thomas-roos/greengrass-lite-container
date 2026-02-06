@@ -7,11 +7,18 @@ TAG="${2:-latest}"
 echo "Creating multi-arch OCI image: $IMAGE_NAME:$TAG"
 echo ""
 
-BUILD_DIR="/home/ubuntu/data/greengrass-lite-container/bitbake-builds/bitbake-setup-greengrass-lite-container-distro_poky-machine_qemuarm64/build"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BUILD_DIR="$SCRIPT_DIR/bitbake-builds/bitbake-setup-greengrass-lite-container-distro_poky-machine_qemuarm64/build"
+
+if [ ! -d "$BUILD_DIR" ]; then
+    echo "Error: Build directory not found: $BUILD_DIR"
+    echo "Run bitbake-setup init first"
+    exit 1
+fi
 
 # Build both architectures
 echo "==> Building ARM64 and x86-64..."
-cd /home/ubuntu/data/greengrass-lite-container
+cd "$SCRIPT_DIR"
 . $BUILD_DIR/init-build-env
 bitbake greengrass-lite-2layer
 bitbake multiconfig:vruntime-x86-64:greengrass-lite-2layer
