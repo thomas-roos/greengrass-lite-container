@@ -63,7 +63,6 @@ Multi-layer OCI container with AWS Greengrass Lite and systemd, built using Yoct
 3. **Setup with your connection kit:**
    ```bash
    ./setup.sh connectionKit.zip
-   echo "nameserver 8.8.8.8" > ./volumes/resolv.conf
    ```
 
 4. **Update compose.yaml to use the registry image:**

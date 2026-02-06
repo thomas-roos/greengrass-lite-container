@@ -43,6 +43,9 @@ chmod 644 "$VOLUME_BASE/etc-greengrass/device.pem.crt"
 chmod 644 "$VOLUME_BASE/etc-greengrass/AmazonRootCA1.pem"
 chmod 644 "$VOLUME_BASE/etc-greengrass/config.yaml"
 
+# Create resolv.conf for container DNS
+echo "nameserver 8.8.8.8" > "$VOLUME_BASE/resolv.conf"
+
 echo ""
 echo "✅ Volumes created successfully!"
 echo ""
