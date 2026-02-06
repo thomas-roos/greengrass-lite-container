@@ -15,9 +15,7 @@ Multi-layer OCI container with AWS Greengrass Lite and systemd, built using Yoct
 
 2. **Build multi-arch (ARM64 + x86-64):**
    ```bash
-   # Enable multiconfig in conf/local.conf:
-   echo 'BBMULTICONFIG = "vruntime-aarch64 vruntime-x86-64"' >> conf/local.conf
-   
+   # Multi-arch is already enabled in the fragment
    # Build both architectures
    bitbake greengrass-lite-2layer
    bitbake multiconfig:vruntime-x86-64:greengrass-lite-2layer
