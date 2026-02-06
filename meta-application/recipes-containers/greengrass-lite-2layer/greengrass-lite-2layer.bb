@@ -9,7 +9,7 @@ OCI_LAYER_MODE = "multi"
 # 2 layers: systemd base (with usrmerge-compat) + greengrass app
 OCI_LAYERS = "\
     systemd:packages:usrmerge-compat+base-files+base-passwd+netbase+systemd+systemd-serialgetty+libcgroup+ca-certificates \
-    greengrass:packages:greengrass-lite+podman \
+    greengrass:packages:greengrass-lite+podman+iptables \
 "
 
 # Use standard paths with usrmerge
@@ -35,6 +35,7 @@ IMAGE_INSTALL = "\
     ca-certificates \
     greengrass-lite \
     podman \
+    iptables \
 "
 
 PACKAGECONFIG:pn-greengrass-lite = ""
