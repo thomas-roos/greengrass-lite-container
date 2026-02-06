@@ -88,15 +88,6 @@ python oci_layer_postprocess() {
             os.remove(resolv_systemd)
             bb.note(f"OCI: Removed /etc/resolv-conf.systemd from layer '{layer_name}'")
         
-        # Create ggcore home directory in greengrass layer
-        if layer_name == 'greengrass':
-            ggcore_home = os.path.join(layer_rootfs, 'home/ggcore')
-            if not os.path.exists(ggcore_home):
-                bb.utils.mkdirhier(ggcore_home)
-                os.chmod(ggcore_home, 0o755)
-                bb.note(f"OCI: Created /home/ggcore directory in layer '{layer_name}'")
-                # Note: Ownership will be set by the ggcore user creation in greengrass-lite package
-        
         # Only process systemd layer for other fixes
         if layer_name == 'systemd':
             # Create /var/volatile directories
