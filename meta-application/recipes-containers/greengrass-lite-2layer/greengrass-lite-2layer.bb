@@ -74,7 +74,19 @@ python oci_layer_postprocess() {
         
         bb.note(f"OCI: Post-processing layer {layer_num} '{layer_name}'")
         
-        # Only process systemd layer
+        # Remove /etc/resolv.conf from ALL layers (let container runtime manage it)
+        resolv_conf = os.path.join(layer_rootfs, 'etc/resolv.conf')
+        if os.path.exists(resolv_conf) or os.path.islink(resolv_conf):
+            os.remove(resolv_conf)
+            bb.note(f"OCI: Removed /etc/resolv.conf from layer '{layer_name}'")
+        
+        # Also remove the target if it's a systemd-managed file
+        resolv_systemd = os.path.join(layer_rootfs, 'etc/resolv-conf.systemd')
+        if os.path.exists(resolv_systemd):
+            os.remove(resolv_systemd)
+            bb.note(f"OCI: Removed /etc/resolv-conf.systemd from layer '{layer_name}'")
+        
+        # Only process systemd layer for other fixes
         if layer_name == 'systemd':
             # Create /var/volatile directories
             volatile_tmp = os.path.join(layer_rootfs, 'var/volatile/tmp')
@@ -94,18 +106,6 @@ python oci_layer_postprocess() {
                 if not os.path.exists(service_link):
                     os.symlink('/dev/null', service_link)
                     bb.note(f"OCI: Masked service {service}")
-            
-            # Remove /etc/resolv.conf if it exists (let container runtime manage it)
-            resolv_conf = os.path.join(layer_rootfs, 'etc/resolv.conf')
-            if os.path.exists(resolv_conf) or os.path.islink(resolv_conf):
-                os.remove(resolv_conf)
-                bb.note(f"OCI: Removed /etc/resolv.conf from layer '{layer_name}'")
-            
-            # Also remove the target if it's a systemd-managed file
-            resolv_systemd = os.path.join(layer_rootfs, 'etc/resolv-conf.systemd')
-            if os.path.exists(resolv_systemd):
-                os.remove(resolv_systemd)
-                bb.note(f"OCI: Removed /etc/resolv-conf.systemd from layer '{layer_name}'")
 }
 
 # Run after oci_multilayer_install_packages

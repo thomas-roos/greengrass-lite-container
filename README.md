@@ -80,10 +80,17 @@ Multi-layer OCI container with AWS Greengrass Lite and systemd, built using Yoct
      --privileged \
      --dns=none \
      --tmpfs /run --tmpfs /run/lock \
+     --tmpfs /etc:exec \
      -v ./volumes/etc-greengrass:/etc/greengrass \
      -v ./volumes/var-lib-greengrass:/var/lib/greengrass \
      -v ./volumes/resolv.conf:/etc/resolv.conf:ro \
      ghcr.io/thomas-roos/greengrass-lite:latest
+   ```
+
+6. **Verify it's running:**
+   ```bash
+   podman exec greengrass-lite systemctl status greengrass-lite.target
+   podman exec greengrass-lite systemctl status ggl.core.iotcored.service
    ```
 
 ## Architecture
