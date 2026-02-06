@@ -93,10 +93,9 @@ python oci_layer_postprocess() {
             ggcore_home = os.path.join(layer_rootfs, 'home/ggcore')
             if not os.path.exists(ggcore_home):
                 bb.utils.mkdirhier(ggcore_home)
-                # Set ownership to ggcore:ggcore (UID/GID typically 500:500 for greengrass)
-                os.chown(ggcore_home, 500, 500)
                 os.chmod(ggcore_home, 0o755)
                 bb.note(f"OCI: Created /home/ggcore directory in layer '{layer_name}'")
+                # Note: Ownership will be set by the ggcore user creation in greengrass-lite package
         
         # Only process systemd layer for other fixes
         if layer_name == 'systemd':
