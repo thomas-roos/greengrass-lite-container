@@ -70,14 +70,17 @@ sudo apt-get install podman buildah skopeo
    ./setup.sh connectionKit.zip
    ```
 
-3. **Update compose.yaml to use the registry image:**
-   ```bash
-   sed -i 's|image:.*|image: ghcr.io/thomas-roos/greengrass-lite:latest|' compose.yaml
-   ```
-
-4. **Start container:**
+3. **Start container:**
    ```bash
    docker-compose up -d
+   # or
+   podman-compose up -d
+   ```
+
+   To use a locally built image instead:
+   ```bash
+   sed -i 's|image:.*|image: greengrass-lite-2layer:latest|' compose.yaml
+   ```
    # or for podman
    podman-compose up -d
    ```

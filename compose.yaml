@@ -1,6 +1,6 @@
 services:
   greengrass-lite:
-    image: greengrass-lite-2layer:v5
+    image: ghcr.io/thomas-roos/greengrass-lite:latest
     container_name: greengrass-lite
     restart: unless-stopped
     privileged: true
