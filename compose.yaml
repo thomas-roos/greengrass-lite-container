@@ -4,7 +4,7 @@ services:
     container_name: greengrass-lite
     restart: unless-stopped
     privileged: true
-    dns: []
+    network_mode: host
     volumes:
       - ./volumes/etc-greengrass:/etc/greengrass
       - ./volumes/var-lib-greengrass:/var/lib/greengrass
