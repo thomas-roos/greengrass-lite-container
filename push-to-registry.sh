@@ -14,10 +14,16 @@ if [ -z "$REPO" ]; then
     exit 1
 fi
 
-OCI_DIR="/home/ubuntu/data/greengrass-lite-container/bitbake-builds/bitbake-setup-greengrass-lite-container-distro_poky-machine_qemuarm64/build/tmp/deploy/images/qemuarm64/greengrass-lite-multiarch-multiarch-oci"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BUILD_DIR="$SCRIPT_DIR/bitbake-builds/bitbake-setup-greengrass-lite-container-distro_poky-machine_qemuarm64/build"
 
-if [ ! -d "$OCI_DIR" ]; then
-    echo "Error: Multi-arch OCI not found at $OCI_DIR"
+ARM64_OCI="$BUILD_DIR/tmp-vruntime-aarch64/deploy/images/qemuarm64/greengrass-lite-2layer-latest-oci"
+AMD64_OCI="$BUILD_DIR/tmp-vruntime-x86-64/deploy/images/qemux86-64/greengrass-lite-2layer-latest-oci"
+
+if [ ! -d "$ARM64_OCI" ] || [ ! -d "$AMD64_OCI" ]; then
+    echo "Error: OCI images not found"
+    echo "ARM64: $ARM64_OCI"
+    echo "AMD64: $AMD64_OCI"
     echo "Run: bitbake greengrass-lite-multiarch"
     exit 1
 fi
@@ -28,11 +34,21 @@ if [ -n "$GITHUB_REPO" ]; then
 fi
 echo ""
 
-# Push using skopeo (preserves multi-arch manifest)
-skopeo copy \
-    --all \
-    oci:$OCI_DIR \
-    docker://$REGISTRY/$REPO:$TAG
+# Push individual platform images
+echo "Pushing ARM64 image..."
+skopeo copy --all oci:$ARM64_OCI docker://$REGISTRY/$REPO:$TAG-arm64
+
+echo "Pushing AMD64 image..."
+skopeo copy --all oci:$AMD64_OCI docker://$REGISTRY/$REPO:$TAG-amd64
+
+# Create multi-arch manifest from pushed images
+echo ""
+echo "Creating multi-arch manifest..."
+buildah manifest rm greengrass-lite:multiarch 2>/dev/null || true
+buildah manifest create greengrass-lite:multiarch
+buildah manifest add greengrass-lite:multiarch docker://$REGISTRY/$REPO:$TAG-arm64
+buildah manifest add greengrass-lite:multiarch docker://$REGISTRY/$REPO:$TAG-amd64
+buildah manifest push --all greengrass-lite:multiarch docker://$REGISTRY/$REPO:$TAG
 
 # If GitHub repo specified, add label to link package to repo
 if [ -n "$GITHUB_REPO" ] && [ "$REGISTRY" = "ghcr.io" ]; then

@@ -65,24 +65,17 @@ sudo apt-get install podman buildah skopeo
    chmod +x setup.sh
    ```
 
-2. **Pull the image:**
-   ```bash
-   docker pull ghcr.io/thomas-roos/greengrass-lite:latest
-   # or
-   podman pull ghcr.io/thomas-roos/greengrass-lite:latest
-   ```
-
-3. **Setup with your connection kit:**
+2. **Setup with your connection kit:**
    ```bash
    ./setup.sh connectionKit.zip
    ```
 
-4. **Update compose.yaml to use the registry image:**
+3. **Update compose.yaml to use the registry image:**
    ```bash
    sed -i 's|image:.*|image: ghcr.io/thomas-roos/greengrass-lite:latest|' compose.yaml
    ```
 
-5. **Start container:**
+4. **Start container:**
    ```bash
    docker-compose up -d
    # or for podman
