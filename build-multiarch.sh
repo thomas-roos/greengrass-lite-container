@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-IMAGE_NAME="${1:-greengrass-lite-2layer}"
+IMAGE_NAME="${1:-greengrass-lite}"
 TAG="${2:-latest}"
 
 echo "Creating multi-arch OCI image: $IMAGE_NAME:$TAG"
@@ -23,30 +23,23 @@ cd "$SCRIPT_DIR"
 bitbake greengrass-lite-2layer
 bitbake multiconfig:vruntime-x86-64:greengrass-lite-2layer
 
-ARM64_TAR="$BUILD_DIR/tmp/deploy/images/qemuarm64/greengrass-lite-2layer-latest-oci.tar"
-X86_TAR="$BUILD_DIR/tmp-vruntime-x86-64/deploy/images/qemux86-64/greengrass-lite-2layer-latest-oci.tar"
+ARM64_OCI="$BUILD_DIR/tmp-vruntime-aarch64/deploy/images/qemuarm64/greengrass-lite-2layer-latest-oci"
+X86_OCI="$BUILD_DIR/tmp-vruntime-x86-64/deploy/images/qemux86-64/greengrass-lite-2layer-latest-oci"
 
-echo "ARM64 image: $ARM64_TAR"
-echo "x86-64 image: $X86_TAR"
+echo "ARM64 OCI: $ARM64_OCI"
+echo "x86-64 OCI: $X86_OCI"
 
-# Load both images to local storage
-echo "==> Loading images to local storage..."
-skopeo copy oci-archive:$ARM64_TAR containers-storage:localhost/$IMAGE_NAME:$TAG-arm64
-skopeo copy oci-archive:$X86_TAR containers-storage:localhost/$IMAGE_NAME:$TAG-amd64
-
-# Create multi-arch manifest
+# Create multi-arch manifest using buildah
 echo "==> Creating multi-arch manifest..."
-podman manifest create $IMAGE_NAME:$TAG
-podman manifest add $IMAGE_NAME:$TAG containers-storage:localhost/$IMAGE_NAME:$TAG-arm64
-podman manifest add $IMAGE_NAME:$TAG containers-storage:localhost/$IMAGE_NAME:$TAG-amd64
+buildah manifest rm $IMAGE_NAME:$TAG 2>/dev/null || true
+buildah manifest create $IMAGE_NAME:$TAG
+buildah manifest add $IMAGE_NAME:$TAG oci:$ARM64_OCI
+buildah manifest add $IMAGE_NAME:$TAG oci:$X86_OCI
 
 echo ""
 echo "✅ Multi-arch manifest created: $IMAGE_NAME:$TAG"
-podman manifest inspect $IMAGE_NAME:$TAG | grep -E "architecture|os" | head -10
+buildah manifest inspect $IMAGE_NAME:$TAG | grep -E "architecture|os" | head -10
 
 echo ""
 echo "To push to registry:"
-echo "  podman manifest push $IMAGE_NAME:$TAG docker://registry.example.com/$IMAGE_NAME:$TAG"
-echo ""
-echo "To use locally:"
-echo "  podman run --rm $IMAGE_NAME:$TAG uname -m"
+echo "  buildah manifest push --all $IMAGE_NAME:$TAG docker://ghcr.io/YOUR_USERNAME/$IMAGE_NAME:$TAG"
