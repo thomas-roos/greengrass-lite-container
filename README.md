@@ -72,9 +72,23 @@ Multi-layer OCI container with AWS Greengrass Lite and systemd, built using Yoct
 
 5. **Start container:**
    ```bash
-   docker-compose up -d
-   # or for podman
-   podman-compose up -d
+   # Recommended: Use podman/docker run directly
+   podman run -d --name greengrass-lite \
+     --privileged \
+     --network host \
+     --tmpfs /run --tmpfs /run/lock \
+     -v ./volumes/etc-greengrass:/etc/greengrass \
+     -v ./volumes/var-lib-greengrass:/var/lib/greengrass \
+     ghcr.io/thomas-roos/greengrass-lite:latest
+   
+   # Or with docker
+   docker run -d --name greengrass-lite \
+     --privileged \
+     --network host \
+     --tmpfs /run --tmpfs /run/lock \
+     -v ./volumes/etc-greengrass:/etc/greengrass \
+     -v ./volumes/var-lib-greengrass:/var/lib/greengrass \
+     ghcr.io/thomas-roos/greengrass-lite:latest
    ```
 
 ## Architecture
