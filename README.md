@@ -23,17 +23,16 @@ sudo apt-get install podman buildah skopeo
 
 ### On Build System
 
-1. **Build the image:**
+1. **Setup build env:**
    ```bash
    cd /path/to/bitbake/bin
    ./bitbake-setup --setting default top-dir-prefix $PWD/../../greengrass-lite-container init \
      $PWD/../../greengrass-lite-container/bitbake-setup.conf.json \
      greengrass-lite-container machine/qemuarm64 distro/poky application/greengrass-lite-container \
      --non-interactive
-   
+
    cd ../../greengrass-lite-container
    . ./bitbake-builds/bitbake-setup-greengrass-lite-container-distro_poky-machine_qemuarm64/build/init-build-env
-   bitbake greengrass-lite-2layer
    ```
 
 2. **Build multi-arch (ARM64 + x86-64):**
@@ -65,7 +64,7 @@ sudo apt-get install podman buildah skopeo
    chmod +x setup.sh
    ```
 
-2. **Setup with your connection kit:**
+2. **Create container volume from connection kit:**
    ```bash
    ./setup.sh connectionKit.zip
    ```
@@ -87,7 +86,7 @@ sudo apt-get install podman buildah skopeo
    docker-compose down
    # or
    podman-compose down
-   
+
    # Force stop if hanging:
    podman rm -f greengrass-lite
    # or
