@@ -123,17 +123,6 @@ The `setup.sh` script extracts your AWS IoT connection kit and configures:
 - Root CA certificate
 - config.yaml with NucleusLite component
 
-## Container Runtime
-
-**Docker and Podman both supported:**
-```bash
-docker compose up -d
-# or
-podman compose up -d
-```
-
-**Key requirement:** Use `--privileged` mode for systemd to manage cgroups properly.
-
 ## Push to GitHub Container Registry
 
 1. **Authenticate with GitHub:**
