@@ -25,6 +25,14 @@ echo "Volume base: $VOLUME_BASE"
 mkdir -p "$VOLUME_BASE/etc-greengrass/config.d"
 mkdir -p "$VOLUME_BASE/var-lib-greengrass"
 
+# Extract greengrass-lite.yaml from image if not already present
+if [ ! -f "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" ]; then
+    echo "Extracting greengrass-lite.yaml from image..."
+    podman run --rm --entrypoint /bin/sh ghcr.io/thomas-roos/greengrass-lite:latest -c "cat /etc/greengrass/config.d/greengrass-lite.yaml" > "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" 2>/dev/null || \
+    docker run --rm --entrypoint /bin/sh ghcr.io/thomas-roos/greengrass-lite:latest -c "cat /etc/greengrass/config.d/greengrass-lite.yaml" > "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" 2>/dev/null || \
+    echo "Warning: Could not extract greengrass-lite.yaml from image"
+fi
+
 # Extract connection kit to etc-greengrass
 echo "Extracting connection kit..."
 unzip -o "$CONNECTION_KIT_ZIP" -d "$VOLUME_BASE/etc-greengrass"
