@@ -97,9 +97,15 @@ python oci_layer_postprocess() {
             
             # Remove /etc/resolv.conf if it exists (let container runtime manage it)
             resolv_conf = os.path.join(layer_rootfs, 'etc/resolv.conf')
-            if os.path.exists(resolv_conf):
+            if os.path.exists(resolv_conf) or os.path.islink(resolv_conf):
                 os.remove(resolv_conf)
                 bb.note(f"OCI: Removed /etc/resolv.conf from layer '{layer_name}'")
+            
+            # Also remove the target if it's a systemd-managed file
+            resolv_systemd = os.path.join(layer_rootfs, 'etc/resolv-conf.systemd')
+            if os.path.exists(resolv_systemd):
+                os.remove(resolv_systemd)
+                bb.note(f"OCI: Removed /etc/resolv-conf.systemd from layer '{layer_name}'")
 }
 
 # Run after oci_multilayer_install_packages

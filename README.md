@@ -72,13 +72,17 @@ Multi-layer OCI container with AWS Greengrass Lite and systemd, built using Yoct
 
 5. **Start container:**
    ```bash
-   # With podman or docker
+   # Create DNS config for container
+   echo "nameserver 8.8.8.8" > ./volumes/resolv.conf
+   
+   # Run container
    podman run -d --name greengrass-lite \
      --privileged \
-     --network host \
+     --dns=none \
      --tmpfs /run --tmpfs /run/lock \
      -v ./volumes/etc-greengrass:/etc/greengrass \
      -v ./volumes/var-lib-greengrass:/var/lib/greengrass \
+     -v ./volumes/resolv.conf:/etc/resolv.conf:ro \
      ghcr.io/thomas-roos/greengrass-lite:latest
    ```
 
