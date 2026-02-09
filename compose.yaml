@@ -16,6 +16,7 @@ services:
       - ./volumes/etc-containers:/etc/containers:ro
       - ./volumes/subuid:/etc/subuid:ro
       - ./volumes/subgid:/etc/subgid:ro
+      - ./volumes/home-ggcore:/home/ggcore
     tmpfs:
       - /run
       - /run/lock
