@@ -70,6 +70,31 @@ runtime = "crun"
 cgroups = "disabled"
 EOF
 
+# Create storage.conf with vfs driver (works with overlay)
+cat > "$VOLUME_BASE/etc-containers/storage.conf" << EOF
+[storage]
+driver = "vfs"
+EOF
+
+# Create registries.conf to enable Docker Hub
+cat > "$VOLUME_BASE/etc-containers/registries.conf" << EOF
+unqualified-search-registries = ["docker.io"]
+
+[[registry]]
+location = "docker.io"
+EOF
+
+# Create policy.json to allow image pulls
+cat > "$VOLUME_BASE/etc-containers/policy.json" << EOF
+{
+  "default": [
+    {
+      "type": "insecureAcceptAnything"
+    }
+  ]
+}
+EOF
+
 echo ""
 echo "✅ Volumes created successfully!"
 echo ""
