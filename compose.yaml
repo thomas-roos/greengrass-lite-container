@@ -14,6 +14,8 @@ services:
       - ./volumes/var-lib-greengrass:/var/lib/greengrass
       - ./volumes/resolv.conf:/etc/resolv.conf:ro
       - ./volumes/etc-containers:/etc/containers:ro
+      - ./volumes/subuid:/etc/subuid:ro
+      - ./volumes/subgid:/etc/subgid:ro
     tmpfs:
       - /run
       - /run/lock

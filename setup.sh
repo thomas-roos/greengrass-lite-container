@@ -95,6 +95,15 @@ cat > "$VOLUME_BASE/etc-containers/policy.json" << EOF
 }
 EOF
 
+# Create subuid/subgid for rootless podman
+cat > "$VOLUME_BASE/subuid" << EOF
+ggcore:100000:65536
+EOF
+
+cat > "$VOLUME_BASE/subgid" << EOF
+ggcore:100000:65536
+EOF
+
 echo ""
 echo "✅ Volumes created successfully!"
 echo ""
