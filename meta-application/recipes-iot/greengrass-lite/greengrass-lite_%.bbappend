@@ -1,7 +1,9 @@
-# Create home directory for ggcore user
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
+
 do_install:append() {
-    install -d -m 0755 ${D}/home/ggcore
-    chown ggcore:ggcore ${D}/home/ggcore
+    # Create .config directory for ggcore user (for nested container configs)
+    install -d -m 0755 ${D}/home/ggcore/.config
+    chown -R ggcore:ggcore ${D}/home/ggcore/.config || true
 }
 
-FILES:${PN} += "/home/ggcore"
+FILES:${PN} += "/home/ggcore/.config"
