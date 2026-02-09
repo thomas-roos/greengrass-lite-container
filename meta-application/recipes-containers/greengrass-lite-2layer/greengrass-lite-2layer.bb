@@ -1,7 +1,17 @@
-SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App"
+SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App v8"
 DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
+
+# Force rebuild when crun changes
+do_rootfs[depends] += "crun:do_package"
+
+# Force rootfs and OCI layer rebuild when anything changes
+do_rootfs[nostamp] = "1"
+do_image_oci[nostamp] = "1"
+
+# Increment this to force rebuild
+PR = "r2"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
@@ -9,7 +19,7 @@ OCI_LAYER_MODE = "multi"
 # 2 layers: systemd base (with usrmerge-compat) + greengrass app
 OCI_LAYERS = "\
     systemd:packages:usrmerge-compat+base-files+base-passwd+netbase+systemd+systemd-serialgetty+libcgroup+ca-certificates \
-    greengrass:packages:greengrass-lite+podman+iptables \
+    greengrass:packages:greengrass-lite+podman+iptables+slirp4netns+python3-misc+python3-venv+python3-tomllib+python3-ensurepip+python3-pip+iputils-ping+crun \
 "
 
 # Use standard paths with usrmerge
@@ -36,10 +46,21 @@ IMAGE_INSTALL = "\
     greengrass-lite \
     podman \
     iptables \
+    slirp4netns \
+    python3-misc \
+    python3-venv \
+    python3-tomllib \
+    python3-ensurepip \
+    python3-pip \
+    iputils-ping \
+    crun \
 "
 
 PACKAGECONFIG:pn-greengrass-lite = ""
 PACKAGECONFIG:pn-systemd:remove = "resolved networkd"
+
+# Exclude runc, use crun instead
+BAD_RECOMMENDATIONS += "runc"
 
 # Python function to fix up OCI layers after package installation
 python oci_layer_postprocess() {

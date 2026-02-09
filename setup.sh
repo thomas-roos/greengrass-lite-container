@@ -52,7 +52,23 @@ chmod 644 "$VOLUME_BASE/etc-greengrass/AmazonRootCA1.pem"
 chmod 644 "$VOLUME_BASE/etc-greengrass/config.yaml"
 
 # Create resolv.conf for container DNS
-echo "nameserver 8.8.8.8" > "$VOLUME_BASE/resolv.conf"
+cat > "$VOLUME_BASE/resolv.conf" << EOF
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+nameserver 1.1.1.1
+EOF
+
+# Create containers.conf for nested container support
+mkdir -p "$VOLUME_BASE/etc-containers"
+cat > "$VOLUME_BASE/etc-containers/containers.conf" << EOF
+[engine]
+cgroup_manager = "cgroupfs"
+events_logger = "file"
+runtime = "crun"
+
+[containers]
+cgroups = "disabled"
+EOF
 
 echo ""
 echo "✅ Volumes created successfully!"

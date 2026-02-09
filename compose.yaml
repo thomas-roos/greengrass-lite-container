@@ -4,13 +4,16 @@ services:
     container_name: greengrass-lite
     restart: unless-stopped
     privileged: true
-    cgroupns_mode: host
-    dns: []
+    security_opt:
+      - label=disable
+    devices:
+      - /dev/net/tun:/dev/net/tun
+      - /dev/fuse:/dev/fuse
     volumes:
       - ./volumes/etc-greengrass:/etc/greengrass
       - ./volumes/var-lib-greengrass:/var/lib/greengrass
       - ./volumes/resolv.conf:/etc/resolv.conf:ro
-      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - ./volumes/etc-containers:/etc/containers:ro
     tmpfs:
       - /run
       - /run/lock
