@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App v13"
+SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App v14"
 DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
