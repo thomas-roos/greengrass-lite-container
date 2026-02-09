@@ -24,7 +24,6 @@ echo "Volume base: $VOLUME_BASE"
 # Create volume directories
 mkdir -p "$VOLUME_BASE/etc-greengrass/config.d"
 mkdir -p "$VOLUME_BASE/var-lib-greengrass"
-mkdir -p "$VOLUME_BASE/home-ggcore"
 
 # Extract greengrass-lite.yaml from image if not already present
 if [ ! -f "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" ]; then
@@ -96,13 +95,13 @@ cat > "$VOLUME_BASE/etc-containers/policy.json" << EOF
 }
 EOF
 
-# Create subuid/subgid for rootless podman
+# Create subuid/subgid for rootless podman (root user)
 cat > "$VOLUME_BASE/subuid" << EOF
-ggcore:100000:65536
+root:100000:65536
 EOF
 
 cat > "$VOLUME_BASE/subgid" << EOF
-ggcore:100000:65536
+root:100000:65536
 EOF
 
 echo ""
