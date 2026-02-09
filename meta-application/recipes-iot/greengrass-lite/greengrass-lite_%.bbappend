@@ -9,6 +9,11 @@ do_install:append() {
     
     # Set ownership (will be applied at runtime)
     chown -R ggcore:ggcore ${D}/home/ggcore || true
+    
+    # Configure Greengrass to run components as root instead of ggcore
+    if [ -f ${D}${sysconfdir}/greengrass/config.d/greengrass-lite.yaml ]; then
+        sed -i 's/runWithDefault:/runWithDefault:\n    posixUser: "root:root"/' ${D}${sysconfdir}/greengrass/config.d/greengrass-lite.yaml
+    fi
 }
 
 FILES:${PN} += "/home/ggcore /home/ggcore/.config"
