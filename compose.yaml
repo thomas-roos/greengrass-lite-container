@@ -13,7 +13,7 @@ services:
       - ./volumes/etc-greengrass:/etc/greengrass
       - ./volumes/var-lib-greengrass:/var/lib/greengrass
       - ./volumes/var-lib-containers:/var/lib/containers
-      - ./volumes/etc-systemd:/etc/systemd/system
+      - ./volumes/greengrass-lite.target.wants:/etc/systemd/system/greengrass-lite.target.wants
       - ./volumes/resolv.conf:/etc/resolv.conf:ro
       - ./volumes/etc-containers:/etc/containers:ro
       - ./volumes/subuid:/etc/subuid:ro

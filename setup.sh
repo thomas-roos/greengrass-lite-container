@@ -25,7 +25,7 @@ echo "Volume base: $VOLUME_BASE"
 mkdir -p "$VOLUME_BASE/etc-greengrass/config.d"
 mkdir -p "$VOLUME_BASE/var-lib-greengrass"
 mkdir -p "$VOLUME_BASE/var-lib-containers"
-mkdir -p "$VOLUME_BASE/etc-systemd"
+mkdir -p "$VOLUME_BASE/greengrass-lite.target.wants"
 
 # Extract greengrass-lite.yaml from image if not already present
 if [ ! -f "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" ]; then
