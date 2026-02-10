@@ -45,39 +45,6 @@ if [ ! -f "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" ]; then
     echo "Warning: Could not extract greengrass-lite.yaml from image"
 fi
 
-# Create entrypoint script to symlink Greengrass services at startup
-cat > "$VOLUME_BASE/entrypoint.sh" << 'EOF'
-#!/bin/sh
-# Patch /etc/passwd and /etc/group to ensure ggcore has UID=0 and GID=0
-if ! grep -q "^ggcore:x:0:0:" /etc/passwd; then
-    # Remove existing ggcore entry if present
-    sed -i '/^ggcore:/d' /etc/passwd
-    # Add ggcore with UID=0
-    echo "ggcore:x:0:0:root:/root:/bin/sh" >> /etc/passwd
-fi
-
-if ! grep -q "^ggcore:x:0:$" /etc/group; then
-    # Remove existing ggcore entry if present
-    sed -i '/^ggcore:/d' /etc/group
-    # Add ggcore with GID=0
-    echo "ggcore:x:0:" >> /etc/group
-fi
-
-# Create /home/ggcore directory for ggcore user
-mkdir -p /home/ggcore/.config
-chmod 755 /home/ggcore /home/ggcore/.config
-
-# Create /lib64 symlink for AWS binaries expecting /lib64/ld-linux-x86-64.so.2
-mkdir -p /lib64
-ln -sf /lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
-# Symlink Greengrass service files from /var/lib/greengrass to /etc/systemd/system
-for f in /var/lib/greengrass/ggl.*.service; do
-    [ -f "$f" ] && ln -sf "$f" /etc/systemd/system/
-done
-exec /sbin/init
-EOF
-chmod +x "$VOLUME_BASE/entrypoint.sh"
-
 # Extract greengrass-lite.yaml from image if not already present
 if [ ! -f "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" ]; then
     echo "Extracting greengrass-lite.yaml from image..."
