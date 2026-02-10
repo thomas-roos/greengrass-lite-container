@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite Single-Layer: SystemD + Greengrass v27"
+SUMMARY = "Greengrass Lite Single-Layer: SystemD + Greengrass v28"
 DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r7"
+PR = "r8"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "single"
@@ -20,8 +20,8 @@ OCI_LAYER_MODE = "single"
 # "
 
 # Use standard paths with usrmerge
-OCI_IMAGE_ENTRYPOINT = "/sbin/init"
-OCI_IMAGE_CMD = "systemd.unified_cgroup_hierarchy=1"
+OCI_IMAGE_ENTRYPOINT = "/entrypoint.sh"
+OCI_IMAGE_CMD = ""
 
 IMAGE_FSTYPES = "container oci"
 inherit image
@@ -164,6 +164,18 @@ python oci_layer_postprocess() {
             f.write('root:100000:65536\n')
         
         bb.note(f"OCI: Created container config files in /etc/containers")
+        
+        # Create entrypoint script to symlink Greengrass services
+        entrypoint_script = os.path.join(rootfs, 'entrypoint.sh')
+        with open(entrypoint_script, 'w') as f:
+            f.write('#!/bin/sh\n')
+            f.write('# Symlink Greengrass service files from /var/lib/greengrass to /etc/systemd/system\n')
+            f.write('for f in /var/lib/greengrass/ggl.*.service; do\n')
+            f.write('    [ -f "$f" ] && ln -sf "$f" /etc/systemd/system/\n')
+            f.write('done\n')
+            f.write('exec /sbin/init systemd.unified_cgroup_hierarchy=1\n')
+        os.chmod(entrypoint_script, 0o755)
+        bb.note(f"OCI: Created /entrypoint.sh")
         
         # Create a systemd service to symlink Greengrass services at boot
         greengrass_symlink_service = os.path.join(rootfs, 'etc/systemd/system/greengrass-symlink.service')
