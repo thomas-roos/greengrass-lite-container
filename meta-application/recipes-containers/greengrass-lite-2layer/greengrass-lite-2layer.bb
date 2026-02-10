@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite Single-Layer: SystemD + Greengrass v25"
+SUMMARY = "Greengrass Lite Single-Layer: SystemD + Greengrass v26"
 DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r5"
+PR = "r6"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "single"
@@ -118,6 +118,52 @@ python oci_layer_postprocess() {
         os.chmod(volatile_tmp, 0o1777)
         os.chmod(volatile_log, 0o755)
         bb.note(f"OCI: Created /var/volatile directories")
+        
+        # Create container config files
+        etc_containers = os.path.join(rootfs, 'etc/containers')
+        bb.utils.mkdirhier(etc_containers)
+        
+        # containers.conf
+        with open(os.path.join(etc_containers, 'containers.conf'), 'w') as f:
+            f.write('[engine]\n')
+            f.write('cgroup_manager = "cgroupfs"\n')
+            f.write('events_logger = "file"\n')
+            f.write('runtime = "crun"\n\n')
+            f.write('[containers]\n')
+            f.write('cgroups = "disabled"\n')
+        
+        # storage.conf
+        with open(os.path.join(etc_containers, 'storage.conf'), 'w') as f:
+            f.write('[storage]\n')
+            f.write('driver = "overlay"\n')
+            f.write('runroot = "/run/containers/storage"\n')
+            f.write('graphroot = "/var/lib/containers/storage"\n')
+        
+        # registries.conf
+        with open(os.path.join(etc_containers, 'registries.conf'), 'w') as f:
+            f.write('unqualified-search-registries = ["docker.io"]\n\n')
+            f.write('[[registry]]\n')
+            f.write('location = "docker.io"\n')
+        
+        # policy.json
+        with open(os.path.join(etc_containers, 'policy.json'), 'w') as f:
+            f.write('{\n')
+            f.write('  "default": [\n')
+            f.write('    {\n')
+            f.write('      "type": "insecureAcceptAnything"\n')
+            f.write('    }\n')
+            f.write('  ]\n')
+            f.write('}\n')
+        
+        # subuid
+        with open(os.path.join(rootfs, 'etc/subuid'), 'w') as f:
+            f.write('root:100000:65536\n')
+        
+        # subgid
+        with open(os.path.join(rootfs, 'etc/subgid'), 'w') as f:
+            f.write('root:100000:65536\n')
+        
+        bb.note(f"OCI: Created container config files in /etc/containers")
         
         # Mask systemd services
         services_to_disable = [

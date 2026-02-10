@@ -77,52 +77,8 @@ cat > "$VOLUME_BASE/etc-containers/containers.conf" << EOF
 [engine]
 cgroup_manager = "cgroupfs"
 events_logger = "file"
-runtime = "crun"
-
-[containers]
-cgroups = "disabled"
-EOF
-
-# Create storage.conf with overlay driver for persistent storage
-cat > "$VOLUME_BASE/etc-containers/storage.conf" << EOF
-[storage]
-driver = "overlay"
-runroot = "/run/containers/storage"
-graphroot = "/var/lib/containers/storage"
-EOF
-
-# Create registries.conf to enable Docker Hub
-cat > "$VOLUME_BASE/etc-containers/registries.conf" << EOF
-unqualified-search-registries = ["docker.io"]
-
-[[registry]]
-location = "docker.io"
-EOF
-
-# Create policy.json to allow image pulls
-cat > "$VOLUME_BASE/etc-containers/policy.json" << EOF
-{
-  "default": [
-    {
-      "type": "insecureAcceptAnything"
-    }
-  ]
-}
-EOF
-
-# Create subuid/subgid for rootless podman (root user)
-cat > "$VOLUME_BASE/subuid" << EOF
-root:100000:65536
-EOF
-
-cat > "$VOLUME_BASE/subgid" << EOF
-root:100000:65536
-EOF
-
 echo ""
 echo "✅ Volumes created successfully!"
-echo ""
-echo "Storage: Using overlay driver with persistent storage at ./volumes/var-lib-containers"
 echo ""
 echo "Storage: Using overlay driver with persistent storage at ./volumes/var-lib-containers"
 echo ""
