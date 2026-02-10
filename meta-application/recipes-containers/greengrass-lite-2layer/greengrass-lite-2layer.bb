@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App v24"
+SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App v25"
 DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r3"
+PR = "r4"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
@@ -159,6 +159,15 @@ python oci_layer_postprocess() {
         # Process greengrass layer to fix ggcore UID
         if layer_name == 'greengrass':
             bb.note(f"OCI: Processing greengrass layer at {layer_rootfs}")
+            
+            # Create /home/ggcore directory for ggcore user
+            ggcore_home = os.path.join(layer_rootfs, 'home/ggcore')
+            ggcore_config = os.path.join(ggcore_home, '.config')
+            bb.utils.mkdirhier(ggcore_config)
+            os.chmod(ggcore_home, 0o755)
+            os.chmod(ggcore_config, 0o755)
+            bb.note(f"OCI: Created /home/ggcore/.config directory in layer '{layer_name}'")
+            
             # Patch ggcore user to UID=0 in layer 2 (greengrass-lite package creates it with UID=999)
             passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
             bb.note(f"OCI: Checking passwd file: {passwd_file}, exists={os.path.exists(passwd_file)}")
