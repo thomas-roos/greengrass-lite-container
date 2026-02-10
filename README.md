@@ -23,23 +23,26 @@ sudo apt-get install podman buildah skopeo
 
 ### On Build System
 
-1. **Clone the repository:**
+1. **Clone the repository with submodules:**
    ```bash
-   git clone https://github.com/thomas-roos/greengrass-lite-container.git
+   git clone --recurse-submodules https://github.com/thomas-roos/greengrass-lite-container.git
    cd greengrass-lite-container
+   ```
+   
+   Or if already cloned:
+   ```bash
+   git submodule update --init --recursive
    ```
 
 2. **Setup build environment (downloads Yocto layers):**
    ```bash
    # bitbake-setup.conf.json will automatically clone all required layers
-   # including bitbake, openembedded-core, meta-virtualization, meta-aws, etc.
-   bitbake-setup --setting default top-dir-prefix $PWD init \
+   # including openembedded-core, meta-virtualization, meta-aws, etc.
+   bitbake/bin/bitbake-setup --setting default top-dir-prefix $PWD init \
      bitbake-setup.conf.json \
      greengrass-lite-container machine/qemuarm64 distro/poky application/greengrass-lite-container \
      --non-interactive
    ```
-   
-   Note: If `bitbake-setup` is not in your PATH, the init process will download it automatically.
 
 3. **Source build environment:**
    ```bash
