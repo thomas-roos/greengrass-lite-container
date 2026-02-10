@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App v23"
+SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App v24"
 DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -156,6 +156,29 @@ python oci_layer_postprocess() {
                 if not os.path.exists(service_link):
                     os.symlink('/dev/null', service_link)
                     bb.note(f"OCI: Masked service {service}")
+        # Process greengrass layer to fix ggcore UID
+        if layer_name == 'greengrass':
+            # Patch ggcore user to UID=0 in layer 2 (greengrass-lite package creates it with UID=999)
+            passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
+            if os.path.exists(passwd_file):
+                with open(passwd_file, 'r') as f:
+                    passwd_content = f.read()
+                # Replace ggcore UID=999 with UID=0
+                passwd_content = passwd_content.replace('ggcore:x:999:999:', 'ggcore:x:0:0:root:/root:')
+                with open(passwd_file, 'w') as f:
+                    f.write(passwd_content)
+                bb.note(f"OCI: Patched ggcore to UID=0 in /etc/passwd")
+            
+            # Patch ggcore group to GID=0 in layer 2
+            group_file = os.path.join(layer_rootfs, 'etc/group')
+            if os.path.exists(group_file):
+                with open(group_file, 'r') as f:
+                    group_content = f.read()
+                # Replace ggcore GID=999 with GID=0
+                group_content = group_content.replace('ggcore:x:999:', 'ggcore:x:0:')
+                with open(group_file, 'w') as f:
+                    f.write(group_content)
+                bb.note(f"OCI: Patched ggcore to GID=0 in /etc/group")
 }
 
 # Run after oci_multilayer_install_packages
