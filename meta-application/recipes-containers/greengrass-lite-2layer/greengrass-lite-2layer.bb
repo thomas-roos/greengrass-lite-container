@@ -3,9 +3,6 @@ DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate laye
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
-# Force rebuild when crun changes
-do_rootfs[depends] += "crun:do_package"
-
 # Force rootfs and OCI layer rebuild when anything changes
 do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
