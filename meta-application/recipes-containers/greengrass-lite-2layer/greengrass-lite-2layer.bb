@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App v25"
+SUMMARY = "Greengrass Lite Single-Layer: SystemD + Greengrass v25"
 DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -8,16 +8,16 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r4"
+PR = "r5"
 
 # Enable multi-layer mode
-OCI_LAYER_MODE = "multi"
+OCI_LAYER_MODE = "single"
 
-# 2 layers: systemd base (with usrmerge-compat) + greengrass app
-OCI_LAYERS = "\
-    systemd:packages:usrmerge-compat+base-files+base-passwd+netbase+systemd+systemd-serialgetty+libcgroup+ca-certificates \
-    greengrass:packages:greengrass-lite+podman+iptables+slirp4netns+python3-misc+python3-venv+python3-tomllib+python3-ensurepip+python3-pip+iputils-ping+crun \
-"
+# Single layer with everything
+# OCI_LAYERS = "\
+#     systemd:packages:usrmerge-compat+base-files+base-passwd+netbase+systemd+systemd-serialgetty+libcgroup+ca-certificates \
+#     greengrass:packages:greengrass-lite+podman+iptables+slirp4netns+python3-misc+python3-venv+python3-tomllib+python3-ensurepip+python3-pip+iputils-ping+crun \
+# "
 
 # Use standard paths with usrmerge
 OCI_IMAGE_ENTRYPOINT = "/sbin/init"
@@ -66,6 +66,76 @@ python oci_layer_postprocess() {
     
     layer_mode = d.getVar('OCI_LAYER_MODE') or 'single'
     if layer_mode != 'multi':
+        # Single layer mode - patch rootfs directly
+        rootfs = d.getVar('IMAGE_ROOTFS')
+        bb.note(f"OCI: Post-processing single-layer rootfs at {rootfs}")
+        
+        # Patch ggcore user to UID=0
+        passwd_file = os.path.join(rootfs, 'etc/passwd')
+        if os.path.exists(passwd_file):
+            with open(passwd_file, 'r') as f:
+                passwd_lines = f.readlines()
+            with open(passwd_file, 'w') as f:
+                for line in passwd_lines:
+                    if line.startswith('ggcore:'):
+                        f.write('ggcore:x:0:0:root:/root:/bin/sh\n')
+                        bb.note(f"OCI: Patched ggcore to UID=0 in /etc/passwd")
+                    else:
+                        f.write(line)
+        
+        # Patch ggcore group to GID=0
+        group_file = os.path.join(rootfs, 'etc/group')
+        if os.path.exists(group_file):
+            with open(group_file, 'r') as f:
+                group_lines = f.readlines()
+            with open(group_file, 'w') as f:
+                for line in group_lines:
+                    if line.startswith('ggcore:'):
+                        f.write('ggcore:x:0:\n')
+                        bb.note(f"OCI: Patched ggcore to GID=0 in /etc/group")
+                    else:
+                        f.write(line)
+        
+        # Create /home/ggcore/.config
+        ggcore_home = os.path.join(rootfs, 'home/ggcore')
+        ggcore_config = os.path.join(ggcore_home, '.config')
+        bb.utils.mkdirhier(ggcore_config)
+        os.chmod(ggcore_home, 0o755)
+        os.chmod(ggcore_config, 0o755)
+        bb.note(f"OCI: Created /home/ggcore/.config directory")
+        
+        # Remove /etc/resolv.conf
+        resolv_conf = os.path.join(rootfs, 'etc/resolv.conf')
+        if os.path.exists(resolv_conf) or os.path.islink(resolv_conf):
+            os.remove(resolv_conf)
+            bb.note(f"OCI: Removed /etc/resolv.conf")
+        
+        # Create /var/volatile directories
+        volatile_tmp = os.path.join(rootfs, 'var/volatile/tmp')
+        volatile_log = os.path.join(rootfs, 'var/volatile/log')
+        bb.utils.mkdirhier(volatile_tmp)
+        bb.utils.mkdirhier(volatile_log)
+        os.chmod(volatile_tmp, 0o1777)
+        os.chmod(volatile_log, 0o755)
+        bb.note(f"OCI: Created /var/volatile directories")
+        
+        # Mask systemd services
+        services_to_disable = [
+            'systemd-udevd.service',
+            'systemd-resolved.service',
+            'systemd-hwdb-update.service',
+            'systemd-modules-load.service',
+            'systemd-vconsole-setup.service',
+            'var-volatile.mount',
+        ]
+        systemd_system_dir = os.path.join(rootfs, 'etc/systemd/system')
+        bb.utils.mkdirhier(systemd_system_dir)
+        for service in services_to_disable:
+            service_link = os.path.join(systemd_system_dir, service)
+            if not os.path.exists(service_link):
+                os.symlink('/dev/null', service_link)
+                bb.note(f"OCI: Masked service {service}")
+        
         return
     
     layer_count = int(d.getVar('OCI_LAYER_COUNT') or '0')
