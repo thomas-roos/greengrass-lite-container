@@ -3,6 +3,9 @@ DESCRIPTION = "Provides /bin, /sbin, /lib symlinks for usrmerge compatibility"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
+# Note: This recipe is needed because vruntime distro overrides DISTRO_FEATURES completely,
+# so the usrmerge distro feature doesn't work. This provides the necessary symlinks manually.
+
 ALLOW_EMPTY:${PN} = "1"
 
 do_install() {
