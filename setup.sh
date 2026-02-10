@@ -27,6 +27,17 @@ mkdir -p "$VOLUME_BASE/var-lib-greengrass"
 mkdir -p "$VOLUME_BASE/var-lib-containers"
 mkdir -p "$VOLUME_BASE/greengrass-lite.target.wants"
 
+# Create entrypoint script to symlink Greengrass services at startup
+cat > "$VOLUME_BASE/entrypoint.sh" << 'EOF'
+#!/bin/sh
+# Symlink Greengrass service files from /var/lib/greengrass to /etc/systemd/system
+for f in /var/lib/greengrass/ggl.*.service; do
+    [ -f "$f" ] && ln -sf "$f" /etc/systemd/system/
+done
+exec /sbin/init
+EOF
+chmod +x "$VOLUME_BASE/entrypoint.sh"
+
 # Extract greengrass-lite.yaml from image if not already present
 if [ ! -f "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" ]; then
     echo "Extracting greengrass-lite.yaml from image..."
