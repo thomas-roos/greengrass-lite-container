@@ -31,13 +31,15 @@ sudo apt-get install podman buildah skopeo
 
 2. **Setup build environment (downloads Yocto layers):**
    ```bash
-   # The bitbake-setup.conf.json will clone all required layers including bitbake
-   # Use bitbake-setup from an existing Yocto installation or let init download it
+   # bitbake-setup.conf.json will automatically clone all required layers
+   # including bitbake, openembedded-core, meta-virtualization, meta-aws, etc.
    bitbake-setup --setting default top-dir-prefix $PWD init \
      bitbake-setup.conf.json \
      greengrass-lite-container machine/qemuarm64 distro/poky application/greengrass-lite-container \
      --non-interactive
    ```
+   
+   Note: If `bitbake-setup` is not in your PATH, the init process will download it automatically.
 
 3. **Source build environment:**
    ```bash
