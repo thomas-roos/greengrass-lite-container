@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App v19"
+SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App v21"
 DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -132,6 +132,14 @@ python oci_layer_postprocess() {
                     with open(group_file, 'a') as f:
                         f.write('ggcore:x:0:\n')
                     bb.note(f"OCI: Added ggcore group with GID=0 to /etc/group")
+            
+            # Create /home/ggcore directory for ggcore user
+            ggcore_home = os.path.join(layer_rootfs, 'home/ggcore')
+            ggcore_config = os.path.join(ggcore_home, '.config')
+            bb.utils.mkdirhier(ggcore_config)
+            os.chmod(ggcore_home, 0o755)
+            os.chmod(ggcore_config, 0o755)
+            bb.note(f"OCI: Created /home/ggcore/.config directory in layer '{layer_name}'")
             
             # Create /var/volatile directories
             volatile_tmp = os.path.join(layer_rootfs, 'var/volatile/tmp')
