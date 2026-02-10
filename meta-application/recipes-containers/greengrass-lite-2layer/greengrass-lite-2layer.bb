@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r2"
+PR = "r3"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
@@ -158,19 +158,29 @@ python oci_layer_postprocess() {
                     bb.note(f"OCI: Masked service {service}")
         # Process greengrass layer to fix ggcore UID
         if layer_name == 'greengrass':
+            bb.note(f"OCI: Processing greengrass layer at {layer_rootfs}")
             # Patch ggcore user to UID=0 in layer 2 (greengrass-lite package creates it with UID=999)
             passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
+            bb.note(f"OCI: Checking passwd file: {passwd_file}, exists={os.path.exists(passwd_file)}")
             if os.path.exists(passwd_file):
                 with open(passwd_file, 'r') as f:
                     passwd_lines = f.readlines()
+                bb.note(f"OCI: Found {len(passwd_lines)} lines in passwd")
                 # Replace ggcore line with UID=0 version
+                patched = False
                 with open(passwd_file, 'w') as f:
                     for line in passwd_lines:
                         if line.startswith('ggcore:'):
+                            bb.note(f"OCI: Found ggcore line: {line.strip()}")
                             f.write('ggcore:x:0:0:root:/root:/bin/sh\n')
                             bb.note(f"OCI: Patched ggcore to UID=0 in /etc/passwd")
+                            patched = True
                         else:
                             f.write(line)
+                if not patched:
+                    bb.note(f"OCI: WARNING - No ggcore line found in passwd!")
+            else:
+                bb.note(f"OCI: WARNING - passwd file does not exist!")
             
             # Patch ggcore group to GID=0 in layer 2
             group_file = os.path.join(layer_rootfs, 'etc/group')
