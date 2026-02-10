@@ -23,24 +23,33 @@ sudo apt-get install podman buildah skopeo
 
 ### On Build System
 
-1. **Setup build env:**
+1. **Clone the repository:**
    ```bash
-   cd /path/to/bitbake/bin
-   ./bitbake-setup --setting default top-dir-prefix $PWD/../../greengrass-lite-container init \
-     $PWD/../../greengrass-lite-container/bitbake-setup.conf.json \
+   git clone https://github.com/thomas-roos/greengrass-lite-container.git
+   cd greengrass-lite-container
+   ```
+
+2. **Setup build environment (downloads Yocto layers):**
+   ```bash
+   # The bitbake-setup.conf.json will clone all required layers including bitbake
+   # Use bitbake-setup from an existing Yocto installation or let init download it
+   bitbake-setup --setting default top-dir-prefix $PWD init \
+     bitbake-setup.conf.json \
      greengrass-lite-container machine/qemuarm64 distro/poky application/greengrass-lite-container \
      --non-interactive
+   ```
 
-   cd ../../greengrass-lite-container
+3. **Source build environment:**
+   ```bash
    . ./bitbake-builds/bitbake-setup-greengrass-lite-container-distro_poky-machine_qemuarm64/build/init-build-env
    ```
 
-2. **Build multi-arch (ARM64 + x86-64):**
+4. **Build multi-arch (ARM64 + x86-64):**
    ```bash
    bitbake greengrass-lite-multiarch
    ```
 
-3. **Push to registry:**
+5. **Push to registry:**
    ```bash
    ./push-to-registry.sh ghcr.io YOUR_USERNAME/greengrass-lite latest YOUR_USERNAME/greengrass-lite-container
    ```
@@ -99,7 +108,7 @@ sudo apt-get install podman buildah skopeo
    podman exec greengrass-lite journalctl -f
    # or
    docker exec greengrass-lite journalctl -f
-   
+
    # Check Greengrass service status
    podman exec greengrass-lite systemctl status ggl.core.iotcored.service
    ```
