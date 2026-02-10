@@ -125,6 +125,12 @@ sudo apt-get install podman buildah skopeo
 **Volumes:**
 - `./volumes/etc-greengrass` - Certificates and config
 - `./volumes/var-lib-greengrass` - Runtime data
+- `./volumes/var-lib-containers` - Container images and layers (persistent overlay storage)
+
+**Container Storage:**
+- Uses **overlay** driver for efficient layer sharing
+- Nested container images persist across restarts
+- Storage location: `./volumes/var-lib-containers`
 
 **Connection Kit:**
 The `setup.sh` script extracts your AWS IoT connection kit and configures:
