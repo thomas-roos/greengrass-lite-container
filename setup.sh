@@ -63,6 +63,10 @@ if ! grep -q "^ggcore:x:0:$" /etc/group; then
     echo "ggcore:x:0:" >> /etc/group
 fi
 
+# Create /home/ggcore directory for ggcore user
+mkdir -p /home/ggcore/.config
+chmod 755 /home/ggcore /home/ggcore/.config
+
 # Create /lib64 symlink for AWS binaries expecting /lib64/ld-linux-x86-64.so.2
 mkdir -p /lib64
 ln -sf /lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
