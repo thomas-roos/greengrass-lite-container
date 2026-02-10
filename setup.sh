@@ -27,6 +27,24 @@ mkdir -p "$VOLUME_BASE/var-lib-greengrass"
 mkdir -p "$VOLUME_BASE/var-lib-containers"
 mkdir -p "$VOLUME_BASE/greengrass-lite.target.wants"
 
+# Extract greengrass-lite.yaml from image if not already present
+if [ ! -f "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" ]; then
+    echo "Extracting greengrass-lite.yaml from image..."
+    
+    # Pull image if not available locally
+    if ! podman image exists ghcr.io/thomas-roos/greengrass-lite:latest 2>/dev/null && \
+       ! docker image inspect ghcr.io/thomas-roos/greengrass-lite:latest >/dev/null 2>&1; then
+        echo "Pulling image ghcr.io/thomas-roos/greengrass-lite:latest..."
+        podman pull ghcr.io/thomas-roos/greengrass-lite:latest 2>/dev/null || \
+        docker pull ghcr.io/thomas-roos/greengrass-lite:latest
+    fi
+    
+    # Extract config file from image
+    podman run --rm --entrypoint /bin/sh ghcr.io/thomas-roos/greengrass-lite:latest -c "cat /etc/greengrass/config.d/greengrass-lite.yaml" > "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" 2>/dev/null || \
+    docker run --rm --entrypoint /bin/sh ghcr.io/thomas-roos/greengrass-lite:latest -c "cat /etc/greengrass/config.d/greengrass-lite.yaml" > "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" 2>/dev/null || \
+    echo "Warning: Could not extract greengrass-lite.yaml from image"
+fi
+
 # Create entrypoint script to symlink Greengrass services at startup
 cat > "$VOLUME_BASE/entrypoint.sh" << 'EOF'
 #!/bin/sh
