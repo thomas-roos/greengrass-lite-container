@@ -16,9 +16,9 @@ PR = "r2"
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
 
-# 2 layers: systemd base (with usrmerge-compat) + greengrass app
+# 2 layers: systemd base + greengrass app
 OCI_LAYERS = "\
-    systemd:packages:usrmerge-compat+base-files+base-passwd+netbase+systemd+systemd-serialgetty+libcgroup+ca-certificates \
+    systemd:packages:base-files+base-passwd+netbase+systemd+systemd-serialgetty+libcgroup+ca-certificates \
     greengrass:packages:greengrass-lite+podman+iptables+slirp4netns+python3-misc+python3-venv+python3-tomllib+python3-ensurepip+python3-pip+iputils-ping+crun \
 "
 
@@ -35,7 +35,6 @@ IMAGE_LINGUAS = ""
 NO_RECOMMENDATIONS = "1"
 
 IMAGE_INSTALL = "\
-    usrmerge-compat \
     base-files \
     base-passwd \
     netbase \
