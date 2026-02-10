@@ -160,6 +160,66 @@ podman exec greengrass-lite systemctl status ggl.core.iotcored.service
 podman exec greengrass-lite journalctl -u ggl.core.iotcored.service -f
 ```
 
+## Deploying Container Components
+
+Greengrass Lite supports running nested containers using Podman. Here's a complete example of deploying a simple Alpine container component.
+
+**1. Create Component Recipe (container-component-recipe.json):**
+```json
+{
+  "RecipeFormatVersion": "2020-01-25",
+  "ComponentName": "com.example.AlpineEcho",
+  "ComponentVersion": "1.0.11",
+  "ComponentType": "aws.greengrass.generic",
+  "ComponentDescription": "Simple Alpine container that echoes a message",
+  "ComponentPublisher": "Example",
+  "Manifests": [
+    {
+      "Platform": {
+        "os": "linux",
+        "runtime": "aws_nucleus_lite"
+      },
+      "Lifecycle": {
+        "run": "podman run --rm --network=slirp4netns --name alpine-demo alpine:latest sh -c 'while true; do echo \"Container running at $(date)\"; sleep 10; done'"
+      }
+    }
+  ]
+}
+```
+
+**2. Create Deployment Configuration (deployment.json):**
+```json
+{
+  "targetArn": "arn:aws:iot:REGION:ACCOUNT_ID:thing/THING_NAME",
+  "components": {
+    "com.example.AlpineEcho": {
+      "componentVersion": "1.0.11"
+    }
+  }
+}
+```
+
+Replace `REGION`, `ACCOUNT_ID`, and `THING_NAME` with your actual values.
+
+**3. Deploy to Device:**
+```bash
+# Create component version
+aws greengrassv2 create-component-version \
+  --region REGION \
+  --inline-recipe fileb://container-component-recipe.json
+
+# Deploy to device
+aws greengrassv2 create-deployment \
+  --region REGION \
+  --cli-input-json file://deployment.json
+```
+
+**4. View Component Logs:**
+```bash
+# Inside the Greengrass container
+podman exec greengrass-lite journalctl -f | grep AlpineEcho
+```
+
 ## Build Details
 
 **Recipe:** `meta-application/recipes-greengrass-lite-2layer/greengrass-lite-2layer/greengrass-lite-2layer.bb`

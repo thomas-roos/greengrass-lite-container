@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App v14"
+SUMMARY = "Greengrass Lite 2-Layer: SystemD Base + Greengrass App v16"
 DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -111,6 +111,28 @@ python oci_layer_postprocess() {
         
         # Only process systemd layer for other fixes
         if layer_name == 'systemd':
+            # Add ggcore user with UID=0 and GID=0 to passwd
+            passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
+            if os.path.exists(passwd_file):
+                with open(passwd_file, 'r') as f:
+                    passwd_lines = f.readlines()
+                # Check if ggcore already exists
+                if not any('ggcore:' in line for line in passwd_lines):
+                    with open(passwd_file, 'a') as f:
+                        f.write('ggcore:x:0:0:root:/root:/bin/sh\n')
+                    bb.note(f"OCI: Added ggcore user with UID=0 to /etc/passwd")
+            
+            # Add ggcore group with GID=0 to group
+            group_file = os.path.join(layer_rootfs, 'etc/group')
+            if os.path.exists(group_file):
+                with open(group_file, 'r') as f:
+                    group_lines = f.readlines()
+                # Check if ggcore already exists
+                if not any('ggcore:' in line for line in group_lines):
+                    with open(group_file, 'a') as f:
+                        f.write('ggcore:x:0:\n')
+                    bb.note(f"OCI: Added ggcore group with GID=0 to /etc/group")
+            
             # Create /var/volatile directories
             volatile_tmp = os.path.join(layer_rootfs, 'var/volatile/tmp')
             volatile_log = os.path.join(layer_rootfs, 'var/volatile/log')
