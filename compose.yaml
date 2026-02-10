@@ -4,10 +4,7 @@ services:
     container_name: greengrass-lite
     restart: unless-stopped
     privileged: true
-    security_opt:
-      - label=disable
     devices:
-      - /dev/net/tun:/dev/net/tun
       - /dev/fuse:/dev/fuse
     entrypoint: ["/entrypoint.sh"]
     volumes:
@@ -16,10 +13,6 @@ services:
       - ./volumes/var-lib-containers:/var/lib/containers
       - ./volumes/greengrass-lite.target.wants:/etc/systemd/system/greengrass-lite.target.wants
       - ./volumes/entrypoint.sh:/entrypoint.sh:ro
-      - ./volumes/resolv.conf:/etc/resolv.conf:ro
-      - ./volumes/etc-containers:/etc/containers:ro
-      - ./volumes/subuid:/etc/subuid:ro
-      - ./volumes/subgid:/etc/subgid:ro
     tmpfs:
       - /run
       - /run/lock
