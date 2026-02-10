@@ -30,6 +30,9 @@ mkdir -p "$VOLUME_BASE/greengrass-lite.target.wants"
 # Create entrypoint script to symlink Greengrass services at startup
 cat > "$VOLUME_BASE/entrypoint.sh" << 'EOF'
 #!/bin/sh
+# Create /lib64 symlink for AWS binaries expecting /lib64/ld-linux-x86-64.so.2
+mkdir -p /lib64
+ln -sf /lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
 # Symlink Greengrass service files from /var/lib/greengrass to /etc/systemd/system
 for f in /var/lib/greengrass/ggl.*.service; do
     [ -f "$f" ] && ln -sf "$f" /etc/systemd/system/
