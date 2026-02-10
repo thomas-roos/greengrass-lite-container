@@ -162,22 +162,29 @@ python oci_layer_postprocess() {
             passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
             if os.path.exists(passwd_file):
                 with open(passwd_file, 'r') as f:
-                    passwd_content = f.read()
-                # Replace ggcore UID=999 with UID=0
-                passwd_content = passwd_content.replace('ggcore:x:999:999:', 'ggcore:x:0:0:root:/root:')
+                    passwd_lines = f.readlines()
+                # Replace ggcore line with UID=0 version
                 with open(passwd_file, 'w') as f:
-                    f.write(passwd_content)
-                bb.note(f"OCI: Patched ggcore to UID=0 in /etc/passwd")
+                    for line in passwd_lines:
+                        if line.startswith('ggcore:'):
+                            f.write('ggcore:x:0:0:root:/root:/bin/sh\n')
+                            bb.note(f"OCI: Patched ggcore to UID=0 in /etc/passwd")
+                        else:
+                            f.write(line)
             
             # Patch ggcore group to GID=0 in layer 2
             group_file = os.path.join(layer_rootfs, 'etc/group')
             if os.path.exists(group_file):
                 with open(group_file, 'r') as f:
-                    group_content = f.read()
-                # Replace ggcore GID=999 with GID=0
-                group_content = group_content.replace('ggcore:x:999:', 'ggcore:x:0:')
+                    group_lines = f.readlines()
+                # Replace ggcore line with GID=0 version
                 with open(group_file, 'w') as f:
-                    f.write(group_content)
+                    for line in group_lines:
+                        if line.startswith('ggcore:'):
+                            f.write('ggcore:x:0:\n')
+                            bb.note(f"OCI: Patched ggcore to GID=0 in /etc/group")
+                        else:
+                            f.write(line)
                 bb.note(f"OCI: Patched ggcore to GID=0 in /etc/group")
 }
 
