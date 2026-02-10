@@ -13,6 +13,7 @@ services:
       - ./volumes/var-lib-containers:/var/lib/containers
       - ./volumes/greengrass-lite.target.wants:/etc/systemd/system/greengrass-lite.target.wants
       - ./volumes/entrypoint.sh:/entrypoint.sh:ro
+      - ./volumes/etc-containers:/etc/containers:ro
       - ./volumes/subuid:/etc/subuid:ro
       - ./volumes/subgid:/etc/subgid:ro
     tmpfs:
