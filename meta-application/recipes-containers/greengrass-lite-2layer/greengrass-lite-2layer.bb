@@ -10,9 +10,6 @@ do_rootfs[depends] += "crun:do_package"
 do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
-# Increment this to force rebuild
-PR = "r2"
-
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
 
@@ -66,17 +63,17 @@ BAD_RECOMMENDATIONS += "runc"
 python oci_layer_postprocess() {
     import os
     import subprocess
-    
+
     layer_mode = d.getVar('OCI_LAYER_MODE') or 'single'
     if layer_mode != 'multi':
         return
-    
+
     layer_count = int(d.getVar('OCI_LAYER_COUNT') or '0')
     if layer_count == 0:
         return
-    
+
     bb.note("OCI: Post-processing layers for systemd container")
-    
+
     # Services to disable for containers
     services_to_disable = [
         'systemd-udevd.service',
@@ -86,53 +83,31 @@ python oci_layer_postprocess() {
         'systemd-vconsole-setup.service',
         'var-volatile.mount',
     ]
-    
+
     # Process each layer
     for layer_num in range(1, layer_count + 1):
         layer_rootfs = d.getVar(f'OCI_LAYER_{layer_num}_ROOTFS')
         layer_name = d.getVar(f'OCI_LAYER_{layer_num}_NAME')
-        
+
         if not layer_rootfs or not os.path.exists(layer_rootfs):
             continue
-        
+
         bb.note(f"OCI: Post-processing layer {layer_num} '{layer_name}'")
-        
+
         # Remove /etc/resolv.conf from ALL layers (let container runtime manage it)
         resolv_conf = os.path.join(layer_rootfs, 'etc/resolv.conf')
         if os.path.exists(resolv_conf) or os.path.islink(resolv_conf):
             os.remove(resolv_conf)
             bb.note(f"OCI: Removed /etc/resolv.conf from layer '{layer_name}'")
-        
+
         # Also remove the target if it's a systemd-managed file
         resolv_systemd = os.path.join(layer_rootfs, 'etc/resolv-conf.systemd')
         if os.path.exists(resolv_systemd):
             os.remove(resolv_systemd)
             bb.note(f"OCI: Removed /etc/resolv-conf.systemd from layer '{layer_name}'")
-        
+
         # Only process systemd layer for other fixes
         if layer_name == 'systemd':
-            # Add ggcore user with UID=0 and GID=0 to passwd
-            passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
-            if os.path.exists(passwd_file):
-                with open(passwd_file, 'r') as f:
-                    passwd_lines = f.readlines()
-                # Check if ggcore already exists
-                if not any('ggcore:' in line for line in passwd_lines):
-                    with open(passwd_file, 'a') as f:
-                        f.write('ggcore:x:0:0:root:/root:/bin/sh\n')
-                    bb.note(f"OCI: Added ggcore user with UID=0 to /etc/passwd")
-            
-            # Add ggcore group with GID=0 to group
-            group_file = os.path.join(layer_rootfs, 'etc/group')
-            if os.path.exists(group_file):
-                with open(group_file, 'r') as f:
-                    group_lines = f.readlines()
-                # Check if ggcore already exists
-                if not any('ggcore:' in line for line in group_lines):
-                    with open(group_file, 'a') as f:
-                        f.write('ggcore:x:0:\n')
-                    bb.note(f"OCI: Added ggcore group with GID=0 to /etc/group")
-            
             # Create /var/volatile directories
             volatile_tmp = os.path.join(layer_rootfs, 'var/volatile/tmp')
             volatile_log = os.path.join(layer_rootfs, 'var/volatile/log')
@@ -141,11 +116,11 @@ python oci_layer_postprocess() {
             os.chmod(volatile_tmp, 0o1777)
             os.chmod(volatile_log, 0o755)
             bb.note(f"OCI: Created /var/volatile directories in layer '{layer_name}'")
-            
+
             # Mask systemd services by creating symlinks to /dev/null
             systemd_system_dir = os.path.join(layer_rootfs, 'etc/systemd/system')
             bb.utils.mkdirhier(systemd_system_dir)
-            
+
             for service in services_to_disable:
                 service_link = os.path.join(systemd_system_dir, service)
                 if not os.path.exists(service_link):
