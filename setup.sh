@@ -65,12 +65,6 @@ chmod 644 "$VOLUME_BASE/etc-greengrass/device.pem.crt"
 chmod 644 "$VOLUME_BASE/etc-greengrass/AmazonRootCA1.pem"
 chmod 644 "$VOLUME_BASE/etc-greengrass/config.yaml"
 
-# Create containers.conf for nested container support
-mkdir -p "$VOLUME_BASE/etc-containers"
-cat > "$VOLUME_BASE/etc-containers/containers.conf" << EOF
-[engine]
-cgroup_manager = "cgroupfs"
-events_logger = "file"
 echo ""
 echo "✅ Volumes created successfully!"
 echo ""
