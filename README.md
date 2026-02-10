@@ -124,20 +124,28 @@ sudo apt-get install podman buildah skopeo
 
 **Volumes:**
 - `./volumes/etc-greengrass` - Certificates and config
-- `./volumes/var-lib-greengrass` - Runtime data
+- `./volumes/var-lib-greengrass` - Runtime data and component artifacts
 - `./volumes/var-lib-containers` - Container images and layers (persistent overlay storage)
+- `./volumes/greengrass-lite.target.wants` - Systemd service links (persistent deployments)
+- `./volumes/entrypoint.sh` - Startup script that symlinks Greengrass services
 
 **Container Storage:**
 - Uses **overlay** driver for efficient layer sharing
 - Nested container images persist across restarts
 - Storage location: `./volumes/var-lib-containers`
 
+**Persistent Deployments:**
+- Greengrass components survive container restarts (down/up)
+- Service files symlinked at startup via entrypoint.sh
+- Enabled state persists in greengrass-lite.target.wants volume
+
 **Connection Kit:**
 The `setup.sh` script extracts your AWS IoT connection kit and configures:
 - Device certificates
-- Private key (with correct permissions for ggcore user)
+- Private key
 - Root CA certificate
 - config.yaml with NucleusLite component
+- entrypoint.sh for service persistence
 
 ## Push to GitHub Container Registry
 
