@@ -85,6 +85,15 @@ chmod 644 "$VOLUME_BASE/etc-greengrass/device.pem.crt"
 chmod 644 "$VOLUME_BASE/etc-greengrass/AmazonRootCA1.pem"
 chmod 644 "$VOLUME_BASE/etc-greengrass/config.yaml"
 
+# Create subuid/subgid for rootless podman (root user)
+cat > "$VOLUME_BASE/subuid" << EOF
+root:100000:65536
+EOF
+
+cat > "$VOLUME_BASE/subgid" << EOF
+root:100000:65536
+EOF
+
 echo ""
 echo "✅ Volumes created successfully!"
 echo ""
