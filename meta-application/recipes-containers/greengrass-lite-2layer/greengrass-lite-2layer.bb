@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite Single-Layer: SystemD + Greengrass v26"
+SUMMARY = "Greengrass Lite Single-Layer: SystemD + Greengrass v27"
 DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r6"
+PR = "r7"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "single"
@@ -164,6 +164,27 @@ python oci_layer_postprocess() {
             f.write('root:100000:65536\n')
         
         bb.note(f"OCI: Created container config files in /etc/containers")
+        
+        # Create a systemd service to symlink Greengrass services at boot
+        greengrass_symlink_service = os.path.join(rootfs, 'etc/systemd/system/greengrass-symlink.service')
+        with open(greengrass_symlink_service, 'w') as f:
+            f.write('[Unit]\n')
+            f.write('Description=Symlink Greengrass services\n')
+            f.write('Before=greengrass-lite.target\n')
+            f.write('DefaultDependencies=no\n\n')
+            f.write('[Service]\n')
+            f.write('Type=oneshot\n')
+            f.write('ExecStart=/bin/sh -c "for f in /var/lib/greengrass/ggl.*.service; do [ -f \\"$f\\" ] && ln -sf \\"$f\\" /etc/systemd/system/; done"\n')
+            f.write('RemainAfterExit=yes\n\n')
+            f.write('[Install]\n')
+            f.write('WantedBy=sysinit.target\n')
+        
+        # Enable the service
+        sysinit_wants = os.path.join(rootfs, 'etc/systemd/system/sysinit.target.wants')
+        bb.utils.mkdirhier(sysinit_wants)
+        os.symlink('/etc/systemd/system/greengrass-symlink.service', 
+                   os.path.join(sysinit_wants, 'greengrass-symlink.service'))
+        bb.note(f"OCI: Created and enabled greengrass-symlink.service")
         
         # Mask systemd services
         services_to_disable = [
