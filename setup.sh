@@ -48,6 +48,21 @@ fi
 # Create entrypoint script to symlink Greengrass services at startup
 cat > "$VOLUME_BASE/entrypoint.sh" << 'EOF'
 #!/bin/sh
+# Patch /etc/passwd and /etc/group to ensure ggcore has UID=0 and GID=0
+if ! grep -q "^ggcore:x:0:0:" /etc/passwd; then
+    # Remove existing ggcore entry if present
+    sed -i '/^ggcore:/d' /etc/passwd
+    # Add ggcore with UID=0
+    echo "ggcore:x:0:0:root:/root:/bin/sh" >> /etc/passwd
+fi
+
+if ! grep -q "^ggcore:x:0:$" /etc/group; then
+    # Remove existing ggcore entry if present
+    sed -i '/^ggcore:/d' /etc/group
+    # Add ggcore with GID=0
+    echo "ggcore:x:0:" >> /etc/group
+fi
+
 # Create /lib64 symlink for AWS binaries expecting /lib64/ld-linux-x86-64.so.2
 mkdir -p /lib64
 ln -sf /lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
