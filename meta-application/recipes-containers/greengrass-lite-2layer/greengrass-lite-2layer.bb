@@ -107,9 +107,11 @@ python oci_layer_postprocess() {
         if layer_name == 'systemd':
             # Create /home/ggcore directory for ggcore user
             ggcore_home = os.path.join(layer_rootfs, 'home/ggcore')
-            bb.utils.mkdirhier(ggcore_home)
+            ggcore_config = os.path.join(ggcore_home, '.config')
+            bb.utils.mkdirhier(ggcore_config)
             os.chmod(ggcore_home, 0o755)
-            bb.note(f"OCI: Created /home/ggcore directory in layer '{layer_name}'")
+            os.chmod(ggcore_config, 0o755)
+            bb.note(f"OCI: Created /home/ggcore/.config directory in layer '{layer_name}'")
             
             # Create /var/volatile directories
             volatile_tmp = os.path.join(layer_rootfs, 'var/volatile/tmp')
