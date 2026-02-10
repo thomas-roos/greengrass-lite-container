@@ -49,12 +49,19 @@ sudo apt-get install podman buildah skopeo
    . ./bitbake-builds/bitbake-setup-greengrass-lite-container-distro_poky-machine_qemuarm64/build/init-build-env
    ```
 
-4. **Build multi-arch (ARM64 + x86-64):**
+4. **Build OCI images for both architectures:**
    ```bash
+   # Build ARM64 and x86-64 images first
+   bitbake -c image_complete mc:vruntime-aarch64:greengrass-lite-2layer mc:vruntime-x86-64:greengrass-lite-2layer
+   ```
+
+5. **Create multi-arch manifest:**
+   ```bash
+   # Combine both images into a single multi-arch manifest
    bitbake greengrass-lite-multiarch
    ```
 
-5. **Push to registry:**
+6. **Push to registry:**
    ```bash
    ./push-to-registry.sh ghcr.io YOUR_USERNAME/greengrass-lite latest YOUR_USERNAME/greengrass-lite-container
    ```
