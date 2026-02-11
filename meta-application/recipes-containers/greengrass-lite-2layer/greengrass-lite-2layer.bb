@@ -41,6 +41,8 @@ ROOTFS_POSTPROCESS_COMMAND += "remove_resolv_conf; "
 
 remove_resolv_conf() {
     rm -f ${IMAGE_ROOTFS}/etc/resolv.conf
+    # Create as broken symlink so OCI runtime knows it's safe to replace
+    ln -sf /run/systemd/resolve/stub-resolv.conf ${IMAGE_ROOTFS}/etc/resolv.conf || true
 }
 
 IMAGE_INSTALL = "\
