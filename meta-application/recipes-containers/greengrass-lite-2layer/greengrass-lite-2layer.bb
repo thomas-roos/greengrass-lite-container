@@ -179,10 +179,6 @@ python oci_layer_postprocess() {
                     os.symlink('/dev/null', service_link)
             
             bb.note(f"OCI: Configured base layer")
-        
-        # Process greengrass layer (layer 1, bottom)
-        if layer_name == 'greengrass':
-            bb.note(f"OCI: Configured greengrass layer")
 }
 
 # Run after oci_multilayer_install_packages
