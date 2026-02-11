@@ -144,35 +144,7 @@ python oci_layer_postprocess() {
             systemd_system_dir = os.path.join(layer_rootfs, 'etc/systemd/system')
             bb.utils.mkdirhier(systemd_system_dir)
             
-            # Create systemd path unit to watch for new service files
-            greengrass_watcher_path = os.path.join(systemd_system_dir, 'greengrass-watcher.path')
-            with open(greengrass_watcher_path, 'w') as f:
-                f.write('[Unit]\n')
-                f.write('Description=Watch for new Greengrass service files\n\n')
-                f.write('[Path]\n')
-                f.write('PathChanged=/var/lib/greengrass\n')
-                f.write('Unit=greengrass-watcher.service\n\n')
-                f.write('[Install]\n')
-                f.write('WantedBy=multi-user.target\n')
-            
-            # Create systemd service to symlink new service files
-            greengrass_watcher_service = os.path.join(systemd_system_dir, 'greengrass-watcher.service')
-            with open(greengrass_watcher_service, 'w') as f:
-                f.write('[Unit]\n')
-                f.write('Description=Symlink new Greengrass service files\n\n')
-                f.write('[Service]\n')
-                f.write('Type=oneshot\n')
-                f.write('ExecStart=/bin/sh -c "for f in /var/lib/greengrass/ggl.*.service; do [ -f \\"$f\\" ] && ln -sf \\"$f\\" /etc/systemd/system/ && systemctl daemon-reload; done"\n')
-            
-            # Enable the path unit
-            multi_user_wants = os.path.join(systemd_system_dir, 'multi-user.target.wants')
-            bb.utils.mkdirhier(multi_user_wants)
-            os.symlink('/etc/systemd/system/greengrass-watcher.path', 
-                       os.path.join(multi_user_wants, 'greengrass-watcher.path'))
-            
             # Mask systemd services
-            systemd_system_dir = os.path.join(layer_rootfs, 'etc/systemd/system')
-            bb.utils.mkdirhier(systemd_system_dir)
             for service in services_to_disable:
                 service_link = os.path.join(systemd_system_dir, service)
                 if not os.path.exists(service_link):
