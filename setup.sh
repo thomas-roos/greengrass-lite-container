@@ -47,6 +47,24 @@ if [ ! -f "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" ]; then
     fi
 fi
 
+# Extract greengrass-lite.target.wants directory from image if not already present
+if [ ! -d "$VOLUME_BASE/greengrass-lite.target.wants" ] || [ -z "$(ls -A "$VOLUME_BASE/greengrass-lite.target.wants" 2>/dev/null)" ]; then
+    echo "Extracting greengrass-lite.target.wants from image..."
+    
+    # Create temporary container to copy files
+    TEMP_CONTAINER=$(podman create ghcr.io/thomas-roos/greengrass-lite:latest 2>/dev/null || docker create ghcr.io/thomas-roos/greengrass-lite:latest)
+    
+    if [ -n "$TEMP_CONTAINER" ]; then
+        # Copy the directory
+        podman cp "$TEMP_CONTAINER:/etc/systemd/system/greengrass-lite.target.wants" "$VOLUME_BASE/" 2>/dev/null || \
+        docker cp "$TEMP_CONTAINER:/etc/systemd/system/greengrass-lite.target.wants" "$VOLUME_BASE/" 2>/dev/null || \
+        echo "Warning: Could not extract greengrass-lite.target.wants from image"
+        
+        # Remove temporary container
+        podman rm "$TEMP_CONTAINER" >/dev/null 2>&1 || docker rm "$TEMP_CONTAINER" >/dev/null 2>&1
+    fi
+fi
+
 # Extract connection kit to etc-greengrass
 echo "Extracting connection kit..."
 unzip -o "$CONNECTION_KIT_ZIP" -d "$VOLUME_BASE/etc-greengrass"
