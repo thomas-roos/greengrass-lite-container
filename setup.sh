@@ -31,12 +31,15 @@ mkdir -p "$VOLUME_BASE/systemd-system"
 if [ ! -f "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" ]; then
     echo "Extracting greengrass-lite.yaml from image..."
     
-    # Pull image if not available locally
-    if ! podman image exists ghcr.io/thomas-roos/greengrass-lite:latest 2>/dev/null && \
-       ! docker image inspect ghcr.io/thomas-roos/greengrass-lite:latest >/dev/null 2>&1; then
-        echo "Pulling image ghcr.io/thomas-roos/greengrass-lite:latest..."
-        podman pull ghcr.io/thomas-roos/greengrass-lite:latest 2>/dev/null || \
-        docker pull ghcr.io/thomas-roos/greengrass-lite:latest
+    # Check if image exists locally
+    if ! docker image inspect ghcr.io/thomas-roos/greengrass-lite:latest >/dev/null 2>&1 && \
+       ! podman image exists ghcr.io/thomas-roos/greengrass-lite:latest 2>/dev/null; then
+        echo "Error: Image ghcr.io/thomas-roos/greengrass-lite:latest not found locally"
+        echo "Please pull the image first:"
+        echo "  docker pull ghcr.io/thomas-roos/greengrass-lite:latest"
+        echo "  # or"
+        echo "  podman pull ghcr.io/thomas-roos/greengrass-lite:latest"
+        exit 1
     fi
     
     # Extract config file from image using copy instead of run
