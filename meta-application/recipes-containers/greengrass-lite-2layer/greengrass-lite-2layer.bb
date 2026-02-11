@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v51"
+SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v52"
 DESCRIPTION = "Multi-layer OCI with base (systemd+containers) and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -86,10 +86,11 @@ IMAGE_CONTAINER_NO_DUMMY = "1"
 do_image_oci[postfuncs] += "remove_resolv_from_oci_blobs"
 
 remove_resolv_from_oci_blobs() {
-    # Find the latest OCI directory
-    OCI_DIR="${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.rootfs-oci"
+    # Find the OCI directory - it has a timestamp in the name
+    OCI_DIR=$(ls -td "${IMGDEPLOYDIR}"/*.rootfs-oci 2>/dev/null | head -1)
     
     if [ -d "$OCI_DIR" ]; then
+        bbnote "Patching OCI directory: $OCI_DIR"
         # Find and patch each layer blob that contains resolv.conf
         for blob in "$OCI_DIR"/blobs/sha256/*; do
             if tar -tzf "$blob" 2>/dev/null | grep -q "^etc/resolv"; then
@@ -103,5 +104,7 @@ remove_resolv_from_oci_blobs() {
                 rm -rf "$TEMP_DIR"
             fi
         done
+    else
+        bbwarn "OCI directory not found in ${IMGDEPLOYDIR}"
     fi
 }
