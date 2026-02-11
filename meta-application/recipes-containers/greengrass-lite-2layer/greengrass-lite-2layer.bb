@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r14"
+PR = "r15"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
@@ -193,6 +193,22 @@ python oci_layer_postprocess() {
         
         # Process greengrass layer
         if layer_name == 'greengrass':
+            # Remove dummy users created by greengrass-lite package
+            passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
+            group_file = os.path.join(layer_rootfs, 'etc/group')
+            
+            if os.path.exists(passwd_file):
+                with open(passwd_file, 'r') as f:
+                    lines = [l for l in f if not l.startswith('dummyuser:') and not l.startswith('ggcore:') and not l.startswith('gg_component:')]
+                with open(passwd_file, 'w') as f:
+                    f.writelines(lines)
+            
+            if os.path.exists(group_file):
+                with open(group_file, 'r') as f:
+                    lines = [l for l in f if not l.startswith('dummygroup:') and not l.startswith('ggcore:') and not l.startswith('gg_component:')]
+                with open(group_file, 'w') as f:
+                    f.writelines(lines)
+            
             bb.note(f"OCI: Configured greengrass layer")
 }
 
