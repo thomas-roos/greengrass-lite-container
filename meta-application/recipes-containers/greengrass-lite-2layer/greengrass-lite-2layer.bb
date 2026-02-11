@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite Single-Layer: SystemD + Greengrass v29"
+SUMMARY = "Greengrass Lite Single-Layer: SystemD + Greengrass v30"
 DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r9"
+PR = "r10"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "single"
@@ -170,6 +170,9 @@ python oci_layer_postprocess() {
         entrypoint_script = os.path.join(rootfs, 'entrypoint.sh')
         with open(entrypoint_script, 'w') as f:
             f.write('#!/bin/sh\n')
+            f.write('# Create /lib64 symlink for AWS binaries expecting /lib64/ld-linux-x86-64.so.2\n')
+            f.write('mkdir -p /lib64\n')
+            f.write('ln -sf /lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 2>/dev/null || true\n')
             f.write('# Symlink Greengrass service files from /var/lib/greengrass to /etc/systemd/system\n')
             f.write('for f in /var/lib/greengrass/ggl.*.service; do\n')
             f.write('    [ -f "$f" ] && ln -sf "$f" /etc/systemd/system/\n')
