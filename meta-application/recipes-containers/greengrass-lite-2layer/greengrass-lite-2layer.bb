@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r18"
+PR = "r19"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
