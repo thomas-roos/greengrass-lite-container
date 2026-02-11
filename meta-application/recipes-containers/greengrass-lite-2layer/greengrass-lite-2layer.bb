@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v44"
+SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v45"
 DESCRIPTION = "Multi-layer OCI with base (systemd+containers) and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -27,6 +27,7 @@ OCI_LAYERS = "\
 # Use standard paths with usrmerge
 OCI_IMAGE_ENTRYPOINT = "/entrypoint.sh"
 OCI_IMAGE_CMD = ""
+OCI_IMAGE_LABELS = "org.opencontainers.image.source=https://github.com/thomas-roos/greengrass-lite-container"
 
 IMAGE_FSTYPES = "container oci"
 inherit image
