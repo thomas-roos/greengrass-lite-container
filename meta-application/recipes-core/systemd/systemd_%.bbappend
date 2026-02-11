@@ -2,6 +2,8 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += "file://entrypoint.sh"
 
+FILES:${PN} += "/entrypoint.sh"
+
 do_install:append() {
     # Remove /etc/resolv.conf
     rm -f ${D}${sysconfdir}/resolv.conf ${D}${sysconfdir}/resolv-conf.systemd
