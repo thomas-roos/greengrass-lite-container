@@ -13,7 +13,6 @@ services:
       - ./volumes/var-lib-greengrass:/var/lib/greengrass
       - ./volumes/var-lib-containers:/var/lib/containers
       - ./volumes/systemd-system:/etc/systemd/system
-      - /etc/resolv.conf:/etc/resolv.conf:ro
     tmpfs:
       - /run
       - /run/lock
