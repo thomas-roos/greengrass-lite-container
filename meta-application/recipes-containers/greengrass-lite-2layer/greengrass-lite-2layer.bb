@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite Single-Layer: SystemD + Greengrass v28"
+SUMMARY = "Greengrass Lite Single-Layer: SystemD + Greengrass v29"
 DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r8"
+PR = "r9"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "single"
@@ -128,7 +128,8 @@ python oci_layer_postprocess() {
             f.write('[engine]\n')
             f.write('cgroup_manager = "cgroupfs"\n')
             f.write('events_logger = "file"\n')
-            f.write('runtime = "crun"\n\n')
+            f.write('runtime = "crun"\n')
+            f.write('netns = "slirp4netns"\n\n')
             f.write('[containers]\n')
             f.write('cgroups = "disabled"\n')
         
