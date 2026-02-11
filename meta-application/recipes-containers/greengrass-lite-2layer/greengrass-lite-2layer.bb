@@ -72,18 +72,3 @@ PACKAGECONFIG:pn-systemd:remove = "resolved networkd"
 BAD_RECOMMENDATIONS += "runc"
 
 IMAGE_CONTAINER_NO_DUMMY = "1"
-
-# Remove resolv.conf from final OCI image after all layers are assembled
-do_image_oci[postfuncs] += "remove_resolv_from_oci"
-
-remove_resolv_from_oci() {
-    if [ -f "${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.rootfs.tar" ]; then
-        cd ${WORKDIR}
-        rm -rf oci-temp
-        mkdir -p oci-temp
-        tar -xf "${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.rootfs.tar" -C oci-temp
-        rm -f oci-temp/etc/resolv.conf
-        tar -cf "${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.rootfs.tar" -C oci-temp .
-        rm -rf oci-temp
-    fi
-}
