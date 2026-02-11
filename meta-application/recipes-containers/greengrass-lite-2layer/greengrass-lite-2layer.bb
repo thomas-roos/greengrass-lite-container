@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v50"
+SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v51"
 DESCRIPTION = "Multi-layer OCI with base (systemd+containers) and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -83,7 +83,9 @@ BAD_RECOMMENDATIONS += "runc"
 IMAGE_CONTAINER_NO_DUMMY = "1"
 
 # Remove resolv.conf from OCI image after creation
-do_image_oci:append() {
+do_image_oci[postfuncs] += "remove_resolv_from_oci_blobs"
+
+remove_resolv_from_oci_blobs() {
     # Find the latest OCI directory
     OCI_DIR="${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.rootfs-oci"
     
