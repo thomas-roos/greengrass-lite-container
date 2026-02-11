@@ -1,14 +1,10 @@
-SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v33"
+SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v43"
 DESCRIPTION = "Multi-layer OCI with base (systemd+containers) and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
-# Force rootfs and OCI layer rebuild when anything changes
-do_rootfs[nostamp] = "1"
-do_image_oci[nostamp] = "1"
-
-# Increment this to force rebuild
-PR = "r21"
+# for now no cache to make sure everything is up to date
+OCI_LAYER_CACHE = "0"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
