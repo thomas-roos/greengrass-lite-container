@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v47"
+SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v48"
 DESCRIPTION = "Multi-layer OCI with base (systemd+containers) and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -22,7 +22,15 @@ OCI_LAYERS = "\
     podman:packages:podman \
     systemd:packages:systemd+systemd-serialgetty \
     greengrass-lite:packages:greengrass-lite \
+    cleanup:script:remove_resolv_conf \
 "
+
+# Script to remove resolv.conf in final layer
+remove_resolv_conf() {
+    rm -f ${LAYER_ROOTFS}/etc/resolv.conf
+    rm -f ${LAYER_ROOTFS}/etc/resolv-conf.systemd
+    rm -f ${LAYER_ROOTFS}/etc/.wh.resolv.conf
+}
 
 # Use standard paths with usrmerge
 OCI_IMAGE_ENTRYPOINT = "/entrypoint.sh"
