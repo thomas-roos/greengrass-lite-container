@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v49"
+SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v50"
 DESCRIPTION = "Multi-layer OCI with base (systemd+containers) and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -81,3 +81,25 @@ ALTERNATIVE:pn-systemd:remove = "resolv-conf"
 BAD_RECOMMENDATIONS += "runc"
 
 IMAGE_CONTAINER_NO_DUMMY = "1"
+
+# Remove resolv.conf from OCI image after creation
+do_image_oci:append() {
+    # Find the latest OCI directory
+    OCI_DIR="${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.rootfs-oci"
+    
+    if [ -d "$OCI_DIR" ]; then
+        # Find and patch each layer blob that contains resolv.conf
+        for blob in "$OCI_DIR"/blobs/sha256/*; do
+            if tar -tzf "$blob" 2>/dev/null | grep -q "^etc/resolv"; then
+                bbnote "Removing resolv.conf from OCI layer $(basename $blob)"
+                
+                # Extract, remove resolv.conf, repack
+                TEMP_DIR=$(mktemp -d)
+                tar -xzf "$blob" -C "$TEMP_DIR"
+                rm -f "$TEMP_DIR/etc/resolv.conf" "$TEMP_DIR/etc/resolv-conf.systemd"
+                tar -czf "$blob" -C "$TEMP_DIR" .
+                rm -rf "$TEMP_DIR"
+            fi
+        done
+    fi
+}
