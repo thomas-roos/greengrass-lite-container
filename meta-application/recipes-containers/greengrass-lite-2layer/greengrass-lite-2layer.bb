@@ -8,16 +8,27 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r19"
+PR = "r20"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
 
-# 2 layers: greengrass (just greengrass-lite) + base (systemd + containers + python)
-# Base layer is last so its /etc/passwd with ggcore UID=0 overlays on top
+# Each package in its own layer - last layer overlays on top
 OCI_LAYERS = "\
-    greengrass:packages:greengrass-lite \
-    base:packages:usrmerge-compat+base-files+base-passwd+netbase+systemd+systemd-serialgetty+libcgroup+ca-certificates+podman+iptables+slirp4netns+python3-misc+python3-venv+python3-tomllib+python3-ensurepip+python3-pip+iputils-ping+crun \
+    usrmerge:packages:usrmerge-compat \
+    netbase:packages:netbase \
+    base-files:packages:base-files \
+    base-passwd:packages:base-passwd \
+    libcgroup:packages:libcgroup \
+    ca-certificates:packages:ca-certificates \
+    iptables:packages:iptables \
+    slirp4netns:packages:slirp4netns \
+    python3:packages:python3-misc+python3-venv+python3-tomllib+python3-ensurepip+python3-pip \
+    iputils:packages:iputils-ping \
+    crun:packages:crun \
+    podman:packages:podman \
+    systemd:packages:systemd+systemd-serialgetty \
+    greengrass-lite:packages:greengrass-lite \
 "
 
 # Use standard paths with usrmerge
@@ -59,101 +70,5 @@ PACKAGECONFIG:pn-systemd:remove = "resolved networkd"
 
 # Exclude runc, use crun instead
 BAD_RECOMMENDATIONS += "runc"
-
-# Python function to fix up OCI layers after package installation
-python oci_layer_postprocess() {
-    import os
-    
-    layer_mode = d.getVar('OCI_LAYER_MODE') or 'single'
-    if layer_mode != 'multi':
-        return
-    
-    layer_count = int(d.getVar('OCI_LAYER_COUNT') or '0')
-    if layer_count == 0:
-        return
-    
-    bb.note("OCI: Post-processing layers for multi-layer container")
-    
-    services_to_disable = [
-        'systemd-udevd.service',
-        'systemd-resolved.service',
-        'systemd-hwdb-update.service',
-        'systemd-modules-load.service',
-        'systemd-vconsole-setup.service',
-        'var-volatile.mount',
-    ]
-    
-    for layer_num in range(1, layer_count + 1):
-        layer_rootfs = d.getVar(f'OCI_LAYER_{layer_num}_ROOTFS')
-        layer_name = d.getVar(f'OCI_LAYER_{layer_num}_NAME')
-        
-        if not layer_rootfs or not os.path.exists(layer_rootfs):
-            continue
-        
-        bb.note(f"OCI: Post-processing layer {layer_num} '{layer_name}'")
-        
-        # Remove /etc/resolv.conf from ALL layers
-        resolv_conf = os.path.join(layer_rootfs, 'etc/resolv.conf')
-        if os.path.exists(resolv_conf) or os.path.islink(resolv_conf):
-            os.remove(resolv_conf)
-            bb.note(f"OCI: Removed /etc/resolv.conf from layer '{layer_name}'")
-        
-        resolv_systemd = os.path.join(layer_rootfs, 'etc/resolv-conf.systemd')
-        if os.path.exists(resolv_systemd):
-            os.remove(resolv_systemd)
-        
-        # Process base layer
-        if layer_name == 'base':
-            # Create /var/volatile directories
-            volatile_tmp = os.path.join(layer_rootfs, 'var/volatile/tmp')
-            volatile_log = os.path.join(layer_rootfs, 'var/volatile/log')
-            bb.utils.mkdirhier(volatile_tmp)
-            bb.utils.mkdirhier(volatile_log)
-            os.chmod(volatile_tmp, 0o1777)
-            os.chmod(volatile_log, 0o755)
-            
-            # Create container config files
-            etc_containers = os.path.join(layer_rootfs, 'etc/containers')
-            bb.utils.mkdirhier(etc_containers)
-            
-            with open(os.path.join(etc_containers, 'containers.conf'), 'w') as f:
-                f.write('[engine]\ncgroup_manager = "cgroupfs"\nevents_logger = "file"\nruntime = "crun"\nnetns = "slirp4netns"\n\n[containers]\ncgroups = "disabled"\n')
-            
-            with open(os.path.join(etc_containers, 'storage.conf'), 'w') as f:
-                f.write('[storage]\ndriver = "overlay"\nrunroot = "/run/containers/storage"\ngraphroot = "/var/lib/containers/storage"\n')
-            
-            with open(os.path.join(etc_containers, 'registries.conf'), 'w') as f:
-                f.write('unqualified-search-registries = ["docker.io"]\n\n[[registry]]\nlocation = "docker.io"\n')
-            
-            with open(os.path.join(etc_containers, 'policy.json'), 'w') as f:
-                f.write('{\n  "default": [\n    {\n      "type": "insecureAcceptAnything"\n    }\n  ]\n}\n')
-            
-            with open(os.path.join(layer_rootfs, 'etc/subuid'), 'w') as f:
-                f.write('root:100000:65536\n')
-            
-            with open(os.path.join(layer_rootfs, 'etc/subgid'), 'w') as f:
-                f.write('root:100000:65536\n')
-            
-            # Create entrypoint script
-            entrypoint_script = os.path.join(layer_rootfs, 'entrypoint.sh')
-            with open(entrypoint_script, 'w') as f:
-                f.write('#!/bin/sh\nmkdir -p /lib64\nln -sf /lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 2>/dev/null || true\nfor f in /var/lib/greengrass/ggl.*.service; do\n    [ -f "$f" ] && ln -sf "$f" /etc/systemd/system/\ndone\nexec /sbin/init systemd.unified_cgroup_hierarchy=1\n')
-            os.chmod(entrypoint_script, 0o755)
-            
-            # Create systemd directories
-            systemd_system_dir = os.path.join(layer_rootfs, 'etc/systemd/system')
-            bb.utils.mkdirhier(systemd_system_dir)
-            
-            # Mask systemd services
-            for service in services_to_disable:
-                service_link = os.path.join(systemd_system_dir, service)
-                if not os.path.exists(service_link):
-                    os.symlink('/dev/null', service_link)
-            
-            bb.note(f"OCI: Configured base layer")
-}
-
-# Run after oci_multilayer_install_packages
-do_image_oci[prefuncs] += "oci_layer_postprocess"
 
 IMAGE_CONTAINER_NO_DUMMY = "1"
