@@ -9,22 +9,16 @@ SRC_URI += "\
     file://subgid \
 "
 
-# OCI layer postprocess for podman layer
-python oci_layer_postprocess:append() {
-    import os
-    layer_rootfs = d.getVar('OCI_LAYER_ROOTFS')
-    if not layer_rootfs:
-        return
-    
+do_install:append() {
     # Install container config files
-    etc_containers = os.path.join(layer_rootfs, 'etc/containers')
-    bb.utils.mkdirhier(etc_containers)
-    for f in ['containers.conf', 'storage.conf', 'registries.conf', 'policy.json']:
-        bb.utils.copyfile(d.expand(f'${{WORKDIR}}/{f}'), os.path.join(etc_containers, f))
+    install -d ${D}${sysconfdir}/containers
+    install -m 0644 ${WORKDIR}/containers.conf ${D}${sysconfdir}/containers/
+    install -m 0644 ${WORKDIR}/storage.conf ${D}${sysconfdir}/containers/
+    install -m 0644 ${WORKDIR}/registries.conf ${D}${sysconfdir}/containers/
+    install -m 0644 ${WORKDIR}/policy.json ${D}${sysconfdir}/containers/
     
     # Install subuid/subgid
-    for f in ['subuid', 'subgid']:
-        bb.utils.copyfile(d.expand(f'${{WORKDIR}}/{f}'), os.path.join(layer_rootfs, 'etc', f))
+    install -m 0644 ${WORKDIR}/subuid ${D}${sysconfdir}/
+    install -m 0644 ${WORKDIR}/subgid ${D}${sysconfdir}/
 }
 
-do_image_oci[prefuncs] += "oci_layer_postprocess"

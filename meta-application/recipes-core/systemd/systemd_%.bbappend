@@ -2,38 +2,21 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += "file://entrypoint.sh"
 
-# OCI layer postprocess for systemd layer
-python oci_layer_postprocess:append() {
-    import os
-    layer_rootfs = d.getVar('OCI_LAYER_ROOTFS')
-    if not layer_rootfs:
-        return
-    
+do_install:append() {
     # Remove /etc/resolv.conf
-    for f in ['etc/resolv.conf', 'etc/resolv-conf.systemd']:
-        path = os.path.join(layer_rootfs, f)
-        if os.path.exists(path) or os.path.islink(path):
-            os.remove(path)
+    rm -f ${D}${sysconfdir}/resolv.conf ${D}${sysconfdir}/resolv-conf.systemd
     
     # Create /var/volatile directories
-    for d in ['var/volatile/tmp', 'var/volatile/log']:
-        path = os.path.join(layer_rootfs, d)
-        bb.utils.mkdirhier(path)
-        os.chmod(path, 0o1777 if 'tmp' in d else 0o755)
+    install -d -m 1777 ${D}${localstatedir}/volatile/tmp
+    install -d -m 0755 ${D}${localstatedir}/volatile/log
     
     # Install entrypoint script
-    entrypoint = os.path.join(layer_rootfs, 'entrypoint.sh')
-    bb.utils.copyfile(d.expand('${WORKDIR}/entrypoint.sh'), entrypoint)
-    os.chmod(entrypoint, 0o755)
+    install -m 0755 ${WORKDIR}/entrypoint.sh ${D}/entrypoint.sh
     
     # Mask services
-    systemd_dir = os.path.join(layer_rootfs, 'etc/systemd/system')
-    bb.utils.mkdirhier(systemd_dir)
-    for svc in ['systemd-udevd.service', 'systemd-resolved.service', 'systemd-hwdb-update.service', 
-                'systemd-modules-load.service', 'systemd-vconsole-setup.service', 'var-volatile.mount']:
-        link = os.path.join(systemd_dir, svc)
-        if not os.path.exists(link):
-            os.symlink('/dev/null', link)
+    for svc in systemd-udevd.service systemd-resolved.service systemd-hwdb-update.service \
+               systemd-modules-load.service systemd-vconsole-setup.service var-volatile.mount; do
+        ln -sf /dev/null ${D}${systemd_system_unitdir}/../system/$svc
+    done
 }
 
-do_image_oci[prefuncs] += "oci_layer_postprocess"
