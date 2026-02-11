@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v48"
+SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v49"
 DESCRIPTION = "Multi-layer OCI with base (systemd+containers) and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -73,6 +73,9 @@ IMAGE_INSTALL = "\
 
 PACKAGECONFIG:pn-greengrass-lite = ""
 PACKAGECONFIG:pn-systemd:remove = "resolved networkd"
+
+# Prevent systemd from creating resolv.conf alternative
+ALTERNATIVE:pn-systemd:remove = "resolv-conf"
 
 # Exclude runc, use crun instead
 BAD_RECOMMENDATIONS += "runc"
