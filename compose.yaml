@@ -4,7 +4,6 @@ services:
     container_name: greengrass-lite
     restart: unless-stopped
     privileged: true
-    network_mode: host
     hostname: greengrass-lite
     devices:
       - /dev/fuse:/dev/fuse
