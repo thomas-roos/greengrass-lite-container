@@ -26,7 +26,7 @@ OCI_LAYERS = "\
 "
 
 # Use standard paths with usrmerge
-OCI_IMAGE_ENTRYPOINT = "/entrypoint.sh"
+OCI_IMAGE_ENTRYPOINT = "/bin/sh"
 OCI_IMAGE_CMD = ""
 OCI_IMAGE_LABELS = "org.opencontainers.image.source=https://github.com/thomas-roos/greengrass-lite-container"
 

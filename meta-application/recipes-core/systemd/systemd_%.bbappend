@@ -1,11 +1,10 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
-SRC_URI += "file://entrypoint.sh"
-
-FILES:${PN} += "/entrypoint.sh"
-
 # Don't create resolv.conf alternative - OCI runtime will bind mount it
 ALTERNATIVE:${PN}:remove = "resolv-conf"
+
+# Set OCI container startup command
+OCI_IMAGE_CMD:pn-greengrass-lite-2layer = "-c 'mkdir -p /lib64 && ln -sf /lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 2>/dev/null || true; exec /sbin/init systemd.unified_cgroup_hierarchy=1'"
 
 do_install:append() {
     # Remove /etc/resolv.conf symlink and target - OCI runtime will bind mount it
@@ -18,9 +17,5 @@ do_install:append() {
     
     # Remove from alternatives system
     rm -f ${D}${libdir}/systemd/resolv.conf
-    
-    # Install entrypoint script
-    install -d ${D}/
-    install -m 0755 ${UNPACKDIR}/entrypoint.sh ${D}/entrypoint.sh
 }
 
