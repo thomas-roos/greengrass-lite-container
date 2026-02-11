@@ -1,6 +1,6 @@
 # Prevent greengrass-lite from creating users
 # ggcore is already created in base-passwd with UID=0
 
-# Clear user/group creation
-GROUPADD_PARAM:${PN} = ""
-USERADD_PARAM:${PN} = ""
+# Provide dummy values to satisfy useradd class requirement
+GROUPADD_PARAM:${PN} = "-r dummygroup"
+USERADD_PARAM:${PN} = "-r -M -N -g dummygroup -s /bin/false dummyuser"
