@@ -25,7 +25,7 @@ echo "Volume base: $VOLUME_BASE"
 mkdir -p "$VOLUME_BASE/etc-greengrass/config.d"
 mkdir -p "$VOLUME_BASE/var-lib-greengrass"
 mkdir -p "$VOLUME_BASE/var-lib-containers"
-mkdir -p "$VOLUME_BASE/greengrass-lite.target.wants"
+mkdir -p "$VOLUME_BASE/systemd-system"
 
 # Extract greengrass-lite.yaml from image if not already present
 if [ ! -f "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" ]; then
@@ -47,20 +47,20 @@ if [ ! -f "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" ]; then
     fi
 fi
 
-# Extract greengrass-lite.target.wants directory from image if empty
-if [ -z "$(ls -A "$VOLUME_BASE/greengrass-lite.target.wants" 2>/dev/null)" ]; then
-    echo "Extracting greengrass-lite.target.wants from image..."
+# Extract systemd system directory from image if empty
+if [ -z "$(ls -A "$VOLUME_BASE/systemd-system" 2>/dev/null)" ]; then
+    echo "Extracting systemd system directory from image..."
     
     # Create temporary container to copy files
     TEMP_CONTAINER=$(podman create ghcr.io/thomas-roos/greengrass-lite:latest 2>/dev/null || docker create ghcr.io/thomas-roos/greengrass-lite:latest)
     
     if [ -n "$TEMP_CONTAINER" ]; then
         # Copy the directory contents
-        if podman cp "$TEMP_CONTAINER:/etc/systemd/system/greengrass-lite.target.wants/." "$VOLUME_BASE/greengrass-lite.target.wants/" 2>/dev/null || \
-           docker cp "$TEMP_CONTAINER:/etc/systemd/system/greengrass-lite.target.wants/." "$VOLUME_BASE/greengrass-lite.target.wants/" 2>/dev/null; then
-            echo "Extracted $(ls -1 "$VOLUME_BASE/greengrass-lite.target.wants" | wc -l) service links"
+        if podman cp "$TEMP_CONTAINER:/etc/systemd/system/." "$VOLUME_BASE/systemd-system/" 2>/dev/null || \
+           docker cp "$TEMP_CONTAINER:/etc/systemd/system/." "$VOLUME_BASE/systemd-system/" 2>/dev/null; then
+            echo "Extracted systemd configuration"
         else
-            echo "Warning: Could not extract greengrass-lite.target.wants from image"
+            echo "Warning: Could not extract systemd system directory from image"
         fi
         
         # Remove temporary container

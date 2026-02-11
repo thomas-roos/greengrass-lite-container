@@ -10,7 +10,7 @@ services:
       - ./volumes/etc-greengrass:/etc/greengrass
       - ./volumes/var-lib-greengrass:/var/lib/greengrass
       - ./volumes/var-lib-containers:/var/lib/containers
-      - ./volumes/greengrass-lite.target.wants:/etc/systemd/system/greengrass-lite.target.wants
+      - ./volumes/systemd-system:/etc/systemd/system
     tmpfs:
       - /run
       - /run/lock

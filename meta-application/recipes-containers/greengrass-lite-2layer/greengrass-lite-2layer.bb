@@ -36,6 +36,13 @@ IMAGE_FEATURES = ""
 IMAGE_LINGUAS = ""
 NO_RECOMMENDATIONS = "1"
 
+# Remove resolv.conf so OCI runtime can bind mount it
+ROOTFS_POSTPROCESS_COMMAND += "remove_resolv_conf; "
+
+remove_resolv_conf() {
+    rm -f ${IMAGE_ROOTFS}/etc/resolv.conf
+}
+
 IMAGE_INSTALL = "\
     usrmerge-compat \
     base-files \
