@@ -15,10 +15,7 @@ OCI_LAYER_MODE = "multi"
 
 # Each package in its own layer - last layer overlays on top
 OCI_LAYERS = "\
-    usrmerge:packages:usrmerge-compat \
-    netbase:packages:netbase \
-    base-files:packages:base-files \
-    base-passwd:packages:base-passwd \
+    base:packages:usrmerge-compat+base-files+base-passwd+netbase \
     libcgroup:packages:libcgroup \
     ca-certificates:packages:ca-certificates \
     iptables:packages:iptables \
