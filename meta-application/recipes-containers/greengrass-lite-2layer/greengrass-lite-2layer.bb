@@ -26,8 +26,8 @@ OCI_LAYERS = "\
 "
 
 # Use standard paths with usrmerge
-OCI_IMAGE_ENTRYPOINT = "/bin/sh"
-OCI_IMAGE_CMD = ""
+OCI_IMAGE_ENTRYPOINT = "/sbin/init"
+OCI_IMAGE_CMD = "systemd.unified_cgroup_hierarchy=1"
 OCI_IMAGE_LABELS = "org.opencontainers.image.source=https://github.com/thomas-roos/greengrass-lite-container"
 
 IMAGE_FSTYPES = "container oci"

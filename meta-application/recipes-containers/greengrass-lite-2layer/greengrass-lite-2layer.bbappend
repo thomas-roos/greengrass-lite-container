@@ -1,2 +1,7 @@
-# Container startup command
-OCI_IMAGE_CMD = "-c 'mkdir -p /lib64 && ln -sf /lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 2>/dev/null || true; exec /sbin/init systemd.unified_cgroup_hierarchy=1'"
+# Create /lib64 symlink for x86_64 compatibility
+do_install:append() {
+    install -d ${D}/lib64
+    ln -sf /lib/ld-linux-x86-64.so.2 ${D}/lib64/ld-linux-x86-64.so.2
+}
+
+FILES:${PN} += "/lib64"
