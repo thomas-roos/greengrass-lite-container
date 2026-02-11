@@ -1,5 +1,5 @@
-SUMMARY = "Greengrass Lite Single-Layer: SystemD + Greengrass v30"
-DESCRIPTION = "Multi-layer OCI with systemd and greengrass-lite in separate layers"
+SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v31"
+DESCRIPTION = "Multi-layer OCI with base (systemd+containers) and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
@@ -8,16 +8,16 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r10"
+PR = "r11"
 
 # Enable multi-layer mode
-OCI_LAYER_MODE = "single"
+OCI_LAYER_MODE = "multi"
 
-# Single layer with everything
-# OCI_LAYERS = "\
-#     systemd:packages:usrmerge-compat+base-files+base-passwd+netbase+systemd+systemd-serialgetty+libcgroup+ca-certificates \
-#     greengrass:packages:greengrass-lite+podman+iptables+slirp4netns+python3-misc+python3-venv+python3-tomllib+python3-ensurepip+python3-pip+iputils-ping+crun \
-# "
+# 2 layers: base (systemd + containers + python) + greengrass (just greengrass-lite)
+OCI_LAYERS = "\
+    base:packages:usrmerge-compat+base-files+base-passwd+netbase+systemd+systemd-serialgetty+libcgroup+ca-certificates+podman+iptables+slirp4netns+python3-misc+python3-venv+python3-tomllib+python3-ensurepip+python3-pip+iputils-ping+crun \
+    greengrass:packages:greengrass-lite \
+"
 
 # Use standard paths with usrmerge
 OCI_IMAGE_ENTRYPOINT = "/entrypoint.sh"
@@ -62,172 +62,17 @@ BAD_RECOMMENDATIONS += "runc"
 # Python function to fix up OCI layers after package installation
 python oci_layer_postprocess() {
     import os
-    import subprocess
     
     layer_mode = d.getVar('OCI_LAYER_MODE') or 'single'
     if layer_mode != 'multi':
-        # Single layer mode - patch rootfs directly
-        rootfs = d.getVar('IMAGE_ROOTFS')
-        bb.note(f"OCI: Post-processing single-layer rootfs at {rootfs}")
-        
-        # Patch ggcore user to UID=0
-        passwd_file = os.path.join(rootfs, 'etc/passwd')
-        if os.path.exists(passwd_file):
-            with open(passwd_file, 'r') as f:
-                passwd_lines = f.readlines()
-            with open(passwd_file, 'w') as f:
-                for line in passwd_lines:
-                    if line.startswith('ggcore:'):
-                        f.write('ggcore:x:0:0:root:/root:/bin/sh\n')
-                        bb.note(f"OCI: Patched ggcore to UID=0 in /etc/passwd")
-                    else:
-                        f.write(line)
-        
-        # Patch ggcore group to GID=0
-        group_file = os.path.join(rootfs, 'etc/group')
-        if os.path.exists(group_file):
-            with open(group_file, 'r') as f:
-                group_lines = f.readlines()
-            with open(group_file, 'w') as f:
-                for line in group_lines:
-                    if line.startswith('ggcore:'):
-                        f.write('ggcore:x:0:\n')
-                        bb.note(f"OCI: Patched ggcore to GID=0 in /etc/group")
-                    else:
-                        f.write(line)
-        
-        # Create /home/ggcore/.config
-        ggcore_home = os.path.join(rootfs, 'home/ggcore')
-        ggcore_config = os.path.join(ggcore_home, '.config')
-        bb.utils.mkdirhier(ggcore_config)
-        os.chmod(ggcore_home, 0o755)
-        os.chmod(ggcore_config, 0o755)
-        bb.note(f"OCI: Created /home/ggcore/.config directory")
-        
-        # Remove /etc/resolv.conf
-        resolv_conf = os.path.join(rootfs, 'etc/resolv.conf')
-        if os.path.exists(resolv_conf) or os.path.islink(resolv_conf):
-            os.remove(resolv_conf)
-            bb.note(f"OCI: Removed /etc/resolv.conf")
-        
-        # Create /var/volatile directories
-        volatile_tmp = os.path.join(rootfs, 'var/volatile/tmp')
-        volatile_log = os.path.join(rootfs, 'var/volatile/log')
-        bb.utils.mkdirhier(volatile_tmp)
-        bb.utils.mkdirhier(volatile_log)
-        os.chmod(volatile_tmp, 0o1777)
-        os.chmod(volatile_log, 0o755)
-        bb.note(f"OCI: Created /var/volatile directories")
-        
-        # Create container config files
-        etc_containers = os.path.join(rootfs, 'etc/containers')
-        bb.utils.mkdirhier(etc_containers)
-        
-        # containers.conf
-        with open(os.path.join(etc_containers, 'containers.conf'), 'w') as f:
-            f.write('[engine]\n')
-            f.write('cgroup_manager = "cgroupfs"\n')
-            f.write('events_logger = "file"\n')
-            f.write('runtime = "crun"\n')
-            f.write('netns = "slirp4netns"\n\n')
-            f.write('[containers]\n')
-            f.write('cgroups = "disabled"\n')
-        
-        # storage.conf
-        with open(os.path.join(etc_containers, 'storage.conf'), 'w') as f:
-            f.write('[storage]\n')
-            f.write('driver = "overlay"\n')
-            f.write('runroot = "/run/containers/storage"\n')
-            f.write('graphroot = "/var/lib/containers/storage"\n')
-        
-        # registries.conf
-        with open(os.path.join(etc_containers, 'registries.conf'), 'w') as f:
-            f.write('unqualified-search-registries = ["docker.io"]\n\n')
-            f.write('[[registry]]\n')
-            f.write('location = "docker.io"\n')
-        
-        # policy.json
-        with open(os.path.join(etc_containers, 'policy.json'), 'w') as f:
-            f.write('{\n')
-            f.write('  "default": [\n')
-            f.write('    {\n')
-            f.write('      "type": "insecureAcceptAnything"\n')
-            f.write('    }\n')
-            f.write('  ]\n')
-            f.write('}\n')
-        
-        # subuid
-        with open(os.path.join(rootfs, 'etc/subuid'), 'w') as f:
-            f.write('root:100000:65536\n')
-        
-        # subgid
-        with open(os.path.join(rootfs, 'etc/subgid'), 'w') as f:
-            f.write('root:100000:65536\n')
-        
-        bb.note(f"OCI: Created container config files in /etc/containers")
-        
-        # Create entrypoint script to symlink Greengrass services
-        entrypoint_script = os.path.join(rootfs, 'entrypoint.sh')
-        with open(entrypoint_script, 'w') as f:
-            f.write('#!/bin/sh\n')
-            f.write('# Create /lib64 symlink for AWS binaries expecting /lib64/ld-linux-x86-64.so.2\n')
-            f.write('mkdir -p /lib64\n')
-            f.write('ln -sf /lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 2>/dev/null || true\n')
-            f.write('# Symlink Greengrass service files from /var/lib/greengrass to /etc/systemd/system\n')
-            f.write('for f in /var/lib/greengrass/ggl.*.service; do\n')
-            f.write('    [ -f "$f" ] && ln -sf "$f" /etc/systemd/system/\n')
-            f.write('done\n')
-            f.write('exec /sbin/init systemd.unified_cgroup_hierarchy=1\n')
-        os.chmod(entrypoint_script, 0o755)
-        bb.note(f"OCI: Created /entrypoint.sh")
-        
-        # Create a systemd service to symlink Greengrass services at boot
-        greengrass_symlink_service = os.path.join(rootfs, 'etc/systemd/system/greengrass-symlink.service')
-        with open(greengrass_symlink_service, 'w') as f:
-            f.write('[Unit]\n')
-            f.write('Description=Symlink Greengrass services\n')
-            f.write('Before=greengrass-lite.target\n')
-            f.write('DefaultDependencies=no\n\n')
-            f.write('[Service]\n')
-            f.write('Type=oneshot\n')
-            f.write('ExecStart=/bin/sh -c "for f in /var/lib/greengrass/ggl.*.service; do [ -f \\"$f\\" ] && ln -sf \\"$f\\" /etc/systemd/system/; done"\n')
-            f.write('RemainAfterExit=yes\n\n')
-            f.write('[Install]\n')
-            f.write('WantedBy=sysinit.target\n')
-        
-        # Enable the service
-        sysinit_wants = os.path.join(rootfs, 'etc/systemd/system/sysinit.target.wants')
-        bb.utils.mkdirhier(sysinit_wants)
-        os.symlink('/etc/systemd/system/greengrass-symlink.service', 
-                   os.path.join(sysinit_wants, 'greengrass-symlink.service'))
-        bb.note(f"OCI: Created and enabled greengrass-symlink.service")
-        
-        # Mask systemd services
-        services_to_disable = [
-            'systemd-udevd.service',
-            'systemd-resolved.service',
-            'systemd-hwdb-update.service',
-            'systemd-modules-load.service',
-            'systemd-vconsole-setup.service',
-            'var-volatile.mount',
-        ]
-        systemd_system_dir = os.path.join(rootfs, 'etc/systemd/system')
-        bb.utils.mkdirhier(systemd_system_dir)
-        for service in services_to_disable:
-            service_link = os.path.join(systemd_system_dir, service)
-            if not os.path.exists(service_link):
-                os.symlink('/dev/null', service_link)
-                bb.note(f"OCI: Masked service {service}")
-        
         return
     
     layer_count = int(d.getVar('OCI_LAYER_COUNT') or '0')
     if layer_count == 0:
         return
     
-    bb.note("OCI: Post-processing layers for systemd container")
+    bb.note("OCI: Post-processing layers for multi-layer container")
     
-    # Services to disable for containers
     services_to_disable = [
         'systemd-udevd.service',
         'systemd-resolved.service',
@@ -237,7 +82,6 @@ python oci_layer_postprocess() {
         'var-volatile.mount',
     ]
     
-    # Process each layer
     for layer_num in range(1, layer_count + 1):
         layer_rootfs = d.getVar(f'OCI_LAYER_{layer_num}_ROOTFS')
         layer_name = d.getVar(f'OCI_LAYER_{layer_num}_NAME')
@@ -247,49 +91,43 @@ python oci_layer_postprocess() {
         
         bb.note(f"OCI: Post-processing layer {layer_num} '{layer_name}'")
         
-        # Remove /etc/resolv.conf from ALL layers (let container runtime manage it)
+        # Remove /etc/resolv.conf from ALL layers
         resolv_conf = os.path.join(layer_rootfs, 'etc/resolv.conf')
         if os.path.exists(resolv_conf) or os.path.islink(resolv_conf):
             os.remove(resolv_conf)
             bb.note(f"OCI: Removed /etc/resolv.conf from layer '{layer_name}'")
         
-        # Also remove the target if it's a systemd-managed file
         resolv_systemd = os.path.join(layer_rootfs, 'etc/resolv-conf.systemd')
         if os.path.exists(resolv_systemd):
             os.remove(resolv_systemd)
-            bb.note(f"OCI: Removed /etc/resolv-conf.systemd from layer '{layer_name}'")
         
-        # Only process systemd layer for other fixes
-        if layer_name == 'systemd':
-            # Add ggcore user with UID=0 and GID=0 to passwd
+        # Process base layer
+        if layer_name == 'base':
+            # Add ggcore user with UID=0
             passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
             if os.path.exists(passwd_file):
                 with open(passwd_file, 'r') as f:
                     passwd_lines = f.readlines()
-                # Check if ggcore already exists
                 if not any('ggcore:' in line for line in passwd_lines):
                     with open(passwd_file, 'a') as f:
                         f.write('ggcore:x:0:0:root:/root:/bin/sh\n')
-                    bb.note(f"OCI: Added ggcore user with UID=0 to /etc/passwd")
+                    bb.note(f"OCI: Added ggcore user with UID=0")
             
-            # Add ggcore group with GID=0 to group
+            # Add ggcore group with GID=0
             group_file = os.path.join(layer_rootfs, 'etc/group')
             if os.path.exists(group_file):
                 with open(group_file, 'r') as f:
                     group_lines = f.readlines()
-                # Check if ggcore already exists
                 if not any('ggcore:' in line for line in group_lines):
                     with open(group_file, 'a') as f:
                         f.write('ggcore:x:0:\n')
-                    bb.note(f"OCI: Added ggcore group with GID=0 to /etc/group")
+                    bb.note(f"OCI: Added ggcore group with GID=0")
             
-            # Create /home/ggcore directory for ggcore user
-            ggcore_home = os.path.join(layer_rootfs, 'home/ggcore')
-            ggcore_config = os.path.join(ggcore_home, '.config')
+            # Create /home/ggcore/.config
+            ggcore_config = os.path.join(layer_rootfs, 'home/ggcore/.config')
             bb.utils.mkdirhier(ggcore_config)
-            os.chmod(ggcore_home, 0o755)
+            os.chmod(os.path.join(layer_rootfs, 'home/ggcore'), 0o755)
             os.chmod(ggcore_config, 0o755)
-            bb.note(f"OCI: Created /home/ggcore/.config directory in layer '{layer_name}'")
             
             # Create /var/volatile directories
             volatile_tmp = os.path.join(layer_rootfs, 'var/volatile/tmp')
@@ -298,66 +136,78 @@ python oci_layer_postprocess() {
             bb.utils.mkdirhier(volatile_log)
             os.chmod(volatile_tmp, 0o1777)
             os.chmod(volatile_log, 0o755)
-            bb.note(f"OCI: Created /var/volatile directories in layer '{layer_name}'")
             
-            # Mask systemd services by creating symlinks to /dev/null
+            # Create container config files
+            etc_containers = os.path.join(layer_rootfs, 'etc/containers')
+            bb.utils.mkdirhier(etc_containers)
+            
+            with open(os.path.join(etc_containers, 'containers.conf'), 'w') as f:
+                f.write('[engine]\ncgroup_manager = "cgroupfs"\nevents_logger = "file"\nruntime = "crun"\nnetns = "slirp4netns"\n\n[containers]\ncgroups = "disabled"\n')
+            
+            with open(os.path.join(etc_containers, 'storage.conf'), 'w') as f:
+                f.write('[storage]\ndriver = "overlay"\nrunroot = "/run/containers/storage"\ngraphroot = "/var/lib/containers/storage"\n')
+            
+            with open(os.path.join(etc_containers, 'registries.conf'), 'w') as f:
+                f.write('unqualified-search-registries = ["docker.io"]\n\n[[registry]]\nlocation = "docker.io"\n')
+            
+            with open(os.path.join(etc_containers, 'policy.json'), 'w') as f:
+                f.write('{\n  "default": [\n    {\n      "type": "insecureAcceptAnything"\n    }\n  ]\n}\n')
+            
+            with open(os.path.join(layer_rootfs, 'etc/subuid'), 'w') as f:
+                f.write('root:100000:65536\n')
+            
+            with open(os.path.join(layer_rootfs, 'etc/subgid'), 'w') as f:
+                f.write('root:100000:65536\n')
+            
+            # Create entrypoint script
+            entrypoint_script = os.path.join(layer_rootfs, 'entrypoint.sh')
+            with open(entrypoint_script, 'w') as f:
+                f.write('#!/bin/sh\nmkdir -p /lib64\nln -sf /lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 2>/dev/null || true\nfor f in /var/lib/greengrass/ggl.*.service; do\n    [ -f "$f" ] && ln -sf "$f" /etc/systemd/system/\ndone\nexec /sbin/init systemd.unified_cgroup_hierarchy=1\n')
+            os.chmod(entrypoint_script, 0o755)
+            
+            # Mask systemd services
             systemd_system_dir = os.path.join(layer_rootfs, 'etc/systemd/system')
             bb.utils.mkdirhier(systemd_system_dir)
-            
             for service in services_to_disable:
                 service_link = os.path.join(systemd_system_dir, service)
                 if not os.path.exists(service_link):
                     os.symlink('/dev/null', service_link)
-                    bb.note(f"OCI: Masked service {service}")
-        # Process greengrass layer to fix ggcore UID
+            
+            bb.note(f"OCI: Configured base layer")
+        
+        # Process greengrass layer
         if layer_name == 'greengrass':
-            bb.note(f"OCI: Processing greengrass layer at {layer_rootfs}")
-            
-            # Create /home/ggcore directory for ggcore user
-            ggcore_home = os.path.join(layer_rootfs, 'home/ggcore')
-            ggcore_config = os.path.join(ggcore_home, '.config')
-            bb.utils.mkdirhier(ggcore_config)
-            os.chmod(ggcore_home, 0o755)
-            os.chmod(ggcore_config, 0o755)
-            bb.note(f"OCI: Created /home/ggcore/.config directory in layer '{layer_name}'")
-            
-            # Patch ggcore user to UID=0 in layer 2 (greengrass-lite package creates it with UID=999)
+            # Patch ggcore to UID=0
             passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
-            bb.note(f"OCI: Checking passwd file: {passwd_file}, exists={os.path.exists(passwd_file)}")
             if os.path.exists(passwd_file):
                 with open(passwd_file, 'r') as f:
                     passwd_lines = f.readlines()
-                bb.note(f"OCI: Found {len(passwd_lines)} lines in passwd")
-                # Replace ggcore line with UID=0 version
-                patched = False
                 with open(passwd_file, 'w') as f:
                     for line in passwd_lines:
                         if line.startswith('ggcore:'):
-                            bb.note(f"OCI: Found ggcore line: {line.strip()}")
                             f.write('ggcore:x:0:0:root:/root:/bin/sh\n')
-                            bb.note(f"OCI: Patched ggcore to UID=0 in /etc/passwd")
-                            patched = True
                         else:
                             f.write(line)
-                if not patched:
-                    bb.note(f"OCI: WARNING - No ggcore line found in passwd!")
-            else:
-                bb.note(f"OCI: WARNING - passwd file does not exist!")
             
-            # Patch ggcore group to GID=0 in layer 2
+            # Patch ggcore group to GID=0
             group_file = os.path.join(layer_rootfs, 'etc/group')
             if os.path.exists(group_file):
                 with open(group_file, 'r') as f:
                     group_lines = f.readlines()
-                # Replace ggcore line with GID=0 version
                 with open(group_file, 'w') as f:
                     for line in group_lines:
                         if line.startswith('ggcore:'):
                             f.write('ggcore:x:0:\n')
-                            bb.note(f"OCI: Patched ggcore to GID=0 in /etc/group")
                         else:
                             f.write(line)
-                bb.note(f"OCI: Patched ggcore to GID=0 in /etc/group")
+            
+            # Create /home/ggcore/.config in greengrass layer too
+            ggcore_config = os.path.join(layer_rootfs, 'home/ggcore/.config')
+            bb.utils.mkdirhier(ggcore_config)
+            os.chmod(os.path.join(layer_rootfs, 'home/ggcore'), 0o755)
+            os.chmod(ggcore_config, 0o755)
+            
+            bb.note(f"OCI: Patched greengrass layer")
 }
 
 # Run after oci_multilayer_install_packages
