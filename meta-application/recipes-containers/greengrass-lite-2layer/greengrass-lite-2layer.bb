@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r15"
+PR = "r16"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
@@ -182,6 +182,18 @@ python oci_layer_postprocess() {
                 service_link = os.path.join(systemd_system_dir, service)
                 if not os.path.exists(service_link):
                     os.symlink('/dev/null', service_link)
+            
+            # Add ggcore user with UID=0 to /etc/passwd and /etc/group
+            passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
+            group_file = os.path.join(layer_rootfs, 'etc/group')
+            
+            if os.path.exists(passwd_file):
+                with open(passwd_file, 'a') as f:
+                    f.write('ggcore:x:0:0:Greengrass Core:/root:/bin/sh\n')
+            
+            if os.path.exists(group_file):
+                with open(group_file, 'a') as f:
+                    f.write('ggcore:x:0:\n')
             
             # Create /home/ggcore/.config directory
             ggcore_config = os.path.join(layer_rootfs, 'home/ggcore/.config')
