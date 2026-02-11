@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     privileged: true
     network_mode: host
+    hostname: greengrass-lite
     devices:
       - /dev/fuse:/dev/fuse
     volumes:
@@ -12,6 +13,7 @@ services:
       - ./volumes/var-lib-greengrass:/var/lib/greengrass
       - ./volumes/var-lib-containers:/var/lib/containers
       - ./volumes/systemd-system:/etc/systemd/system
+      - /etc/resolv.conf:/etc/resolv.conf:ro
     tmpfs:
       - /run
       - /run/lock
