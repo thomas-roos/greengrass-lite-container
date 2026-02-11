@@ -11,4 +11,7 @@ do_install:append() {
     if ! grep -q "^ggcore:" ${D}${datadir}/base-passwd/group.master; then
         echo "ggcore:x:0:" >> ${D}${datadir}/base-passwd/group.master
     fi
+    
+    # Create /home/ggcore/.config directory
+    install -d -m 0755 ${D}/home/ggcore/.config
 }

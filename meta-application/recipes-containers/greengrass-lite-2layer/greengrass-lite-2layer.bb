@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r13"
+PR = "r14"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
@@ -187,12 +187,6 @@ python oci_layer_postprocess() {
         
         # Process greengrass layer
         if layer_name == 'greengrass':
-            # Create /home/ggcore/.config in greengrass layer too
-            ggcore_config = os.path.join(layer_rootfs, 'home/ggcore/.config')
-            bb.utils.mkdirhier(ggcore_config)
-            os.chmod(os.path.join(layer_rootfs, 'home/ggcore'), 0o755)
-            os.chmod(ggcore_config, 0o755)
-            
             bb.note(f"OCI: Configured greengrass layer")
 }
 
