@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v46"
+SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v47"
 DESCRIPTION = "Multi-layer OCI with base (systemd+containers) and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -38,12 +38,14 @@ IMAGE_LINGUAS = ""
 NO_RECOMMENDATIONS = "1"
 
 # Remove resolv.conf so OCI runtime can bind mount it
+# Use whiteout to hide it from earlier layers
 ROOTFS_POSTPROCESS_COMMAND += "remove_resolv_conf; "
 
 remove_resolv_conf() {
     rm -f ${IMAGE_ROOTFS}/etc/resolv.conf
-    # Create as broken symlink so OCI runtime knows it's safe to replace
-    ln -sf /run/systemd/resolve/stub-resolv.conf ${IMAGE_ROOTFS}/etc/resolv.conf || true
+    rm -f ${IMAGE_ROOTFS}/etc/resolv-conf.systemd
+    # Create OCI whiteout marker to hide file from lower layers
+    touch ${IMAGE_ROOTFS}/etc/.wh.resolv.conf
 }
 
 IMAGE_INSTALL = "\
