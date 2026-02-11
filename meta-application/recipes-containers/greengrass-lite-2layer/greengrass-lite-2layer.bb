@@ -183,6 +183,12 @@ python oci_layer_postprocess() {
                 if not os.path.exists(service_link):
                     os.symlink('/dev/null', service_link)
             
+            # Create /home/ggcore/.config directory
+            ggcore_config = os.path.join(layer_rootfs, 'home/ggcore/.config')
+            bb.utils.mkdirhier(ggcore_config)
+            os.chmod(os.path.join(layer_rootfs, 'home/ggcore'), 0o755)
+            os.chmod(ggcore_config, 0o755)
+            
             bb.note(f"OCI: Configured base layer")
         
         # Process greengrass layer
