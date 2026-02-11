@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v32"
+SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v33"
 DESCRIPTION = "Multi-layer OCI with base (systemd+containers) and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r12"
+PR = "r13"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
@@ -103,26 +103,6 @@ python oci_layer_postprocess() {
         
         # Process base layer
         if layer_name == 'base':
-            # Add ggcore user with UID=0
-            passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
-            if os.path.exists(passwd_file):
-                with open(passwd_file, 'r') as f:
-                    passwd_lines = f.readlines()
-                if not any('ggcore:' in line for line in passwd_lines):
-                    with open(passwd_file, 'a') as f:
-                        f.write('ggcore:x:0:0:root:/root:/bin/sh\n')
-                    bb.note(f"OCI: Added ggcore user with UID=0")
-            
-            # Add ggcore group with GID=0
-            group_file = os.path.join(layer_rootfs, 'etc/group')
-            if os.path.exists(group_file):
-                with open(group_file, 'r') as f:
-                    group_lines = f.readlines()
-                if not any('ggcore:' in line for line in group_lines):
-                    with open(group_file, 'a') as f:
-                        f.write('ggcore:x:0:\n')
-                    bb.note(f"OCI: Added ggcore group with GID=0")
-            
             # Create /home/ggcore/.config
             ggcore_config = os.path.join(layer_rootfs, 'home/ggcore/.config')
             bb.utils.mkdirhier(ggcore_config)
@@ -165,6 +145,10 @@ python oci_layer_postprocess() {
                 f.write('#!/bin/sh\nmkdir -p /lib64\nln -sf /lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 2>/dev/null || true\nfor f in /var/lib/greengrass/ggl.*.service; do\n    [ -f "$f" ] && ln -sf "$f" /etc/systemd/system/\ndone\nexec /sbin/init systemd.unified_cgroup_hierarchy=1\n')
             os.chmod(entrypoint_script, 0o755)
             
+            # Create systemd directories
+            systemd_system_dir = os.path.join(layer_rootfs, 'etc/systemd/system')
+            bb.utils.mkdirhier(systemd_system_dir)
+            
             # Create systemd path unit to watch for new service files
             greengrass_watcher_path = os.path.join(systemd_system_dir, 'greengrass-watcher.path')
             with open(greengrass_watcher_path, 'w') as f:
@@ -203,37 +187,13 @@ python oci_layer_postprocess() {
         
         # Process greengrass layer
         if layer_name == 'greengrass':
-            # Patch ggcore to UID=0
-            passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
-            if os.path.exists(passwd_file):
-                with open(passwd_file, 'r') as f:
-                    passwd_lines = f.readlines()
-                with open(passwd_file, 'w') as f:
-                    for line in passwd_lines:
-                        if line.startswith('ggcore:'):
-                            f.write('ggcore:x:0:0:root:/root:/bin/sh\n')
-                        else:
-                            f.write(line)
-            
-            # Patch ggcore group to GID=0
-            group_file = os.path.join(layer_rootfs, 'etc/group')
-            if os.path.exists(group_file):
-                with open(group_file, 'r') as f:
-                    group_lines = f.readlines()
-                with open(group_file, 'w') as f:
-                    for line in group_lines:
-                        if line.startswith('ggcore:'):
-                            f.write('ggcore:x:0:\n')
-                        else:
-                            f.write(line)
-            
             # Create /home/ggcore/.config in greengrass layer too
             ggcore_config = os.path.join(layer_rootfs, 'home/ggcore/.config')
             bb.utils.mkdirhier(ggcore_config)
             os.chmod(os.path.join(layer_rootfs, 'home/ggcore'), 0o755)
             os.chmod(ggcore_config, 0o755)
             
-            bb.note(f"OCI: Patched greengrass layer")
+            bb.note(f"OCI: Configured greengrass layer")
 }
 
 # Run after oci_multilayer_install_packages
