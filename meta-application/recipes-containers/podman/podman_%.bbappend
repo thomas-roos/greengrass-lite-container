@@ -12,13 +12,13 @@ SRC_URI += "\
 do_install:append() {
     # Install container config files
     install -d ${D}${sysconfdir}/containers
-    install -m 0644 ${WORKDIR}/containers.conf ${D}${sysconfdir}/containers/
-    install -m 0644 ${WORKDIR}/storage.conf ${D}${sysconfdir}/containers/
-    install -m 0644 ${WORKDIR}/registries.conf ${D}${sysconfdir}/containers/
-    install -m 0644 ${WORKDIR}/policy.json ${D}${sysconfdir}/containers/
+    install -m 0644 ${UNPACKDIR}/containers.conf ${D}${sysconfdir}/containers/
+    install -m 0644 ${UNPACKDIR}/storage.conf ${D}${sysconfdir}/containers/
+    install -m 0644 ${UNPACKDIR}/registries.conf ${D}${sysconfdir}/containers/
+    install -m 0644 ${UNPACKDIR}/policy.json ${D}${sysconfdir}/containers/
     
     # Install subuid/subgid
-    install -m 0644 ${WORKDIR}/subuid ${D}${sysconfdir}/
-    install -m 0644 ${WORKDIR}/subgid ${D}${sysconfdir}/
+    install -m 0644 ${UNPACKDIR}/subuid ${D}${sysconfdir}/
+    install -m 0644 ${UNPACKDIR}/subgid ${D}${sysconfdir}/
 }
 

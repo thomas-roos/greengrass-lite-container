@@ -11,12 +11,14 @@ do_install:append() {
     install -d -m 0755 ${D}${localstatedir}/volatile/log
     
     # Install entrypoint script
-    install -m 0755 ${WORKDIR}/entrypoint.sh ${D}/entrypoint.sh
+    install -d ${D}/
+    install -m 0755 ${UNPACKDIR}/entrypoint.sh ${D}/entrypoint.sh
     
     # Mask services
+    install -d ${D}${sysconfdir}/systemd/system
     for svc in systemd-udevd.service systemd-resolved.service systemd-hwdb-update.service \
                systemd-modules-load.service systemd-vconsole-setup.service var-volatile.mount; do
-        ln -sf /dev/null ${D}${systemd_system_unitdir}/../system/$svc
+        ln -sf /dev/null ${D}${sysconfdir}/systemd/system/$svc
     done
 }
 
