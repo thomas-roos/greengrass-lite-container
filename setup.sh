@@ -39,13 +39,21 @@ if [ ! -f "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" ]; then
         docker pull ghcr.io/thomas-roos/greengrass-lite:latest
     fi
     
-    # Extract config file from image
-    if podman run --rm --entrypoint /bin/sh ghcr.io/thomas-roos/greengrass-lite:latest -c "cat /etc/greengrass/config.d/greengrass-lite.yaml" > "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" 2>/dev/null; then
-        echo "Extracted greengrass-lite.yaml"
-    elif docker run --rm --entrypoint /bin/sh ghcr.io/thomas-roos/greengrass-lite:latest -c "cat /etc/greengrass/config.d/greengrass-lite.yaml" > "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" 2>/dev/null; then
-        echo "Extracted greengrass-lite.yaml"
+    # Extract config file from image using copy instead of run
+    TEMP_CONTAINER=$(docker create ghcr.io/thomas-roos/greengrass-lite:latest 2>/dev/null || podman create ghcr.io/thomas-roos/greengrass-lite:latest 2>/dev/null)
+    
+    if [ -n "$TEMP_CONTAINER" ]; then
+        if docker cp "$TEMP_CONTAINER:/etc/greengrass/config.d/greengrass-lite.yaml" "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" 2>/dev/null || \
+           podman cp "$TEMP_CONTAINER:/etc/greengrass/config.d/greengrass-lite.yaml" "$VOLUME_BASE/etc-greengrass/config.d/greengrass-lite.yaml" 2>/dev/null; then
+            echo "Extracted greengrass-lite.yaml"
+        else
+            echo "Error: Could not extract greengrass-lite.yaml from image"
+            docker rm "$TEMP_CONTAINER" >/dev/null 2>&1 || podman rm "$TEMP_CONTAINER" >/dev/null 2>&1
+            exit 1
+        fi
+        docker rm "$TEMP_CONTAINER" >/dev/null 2>&1 || podman rm "$TEMP_CONTAINER" >/dev/null 2>&1
     else
-        echo "Error: Could not extract greengrass-lite.yaml from image"
+        echo "Error: Could not create temporary container"
         exit 1
     fi
 fi
