@@ -22,15 +22,8 @@ OCI_LAYERS = "\
     podman:packages:podman \
     systemd:packages:systemd+systemd-serialgetty \
     greengrass-lite:packages:greengrass-lite \
-    cleanup:script:remove_resolv_conf \
+    cleanup:directories:${THISDIR}/${PN}/cleanup-layer \
 "
-
-# Script to remove resolv.conf in final layer
-remove_resolv_conf() {
-    rm -f ${LAYER_ROOTFS}/etc/resolv.conf
-    rm -f ${LAYER_ROOTFS}/etc/resolv-conf.systemd
-    rm -f ${LAYER_ROOTFS}/etc/.wh.resolv.conf
-}
 
 # Use standard paths with usrmerge
 OCI_IMAGE_ENTRYPOINT = "/entrypoint.sh"
