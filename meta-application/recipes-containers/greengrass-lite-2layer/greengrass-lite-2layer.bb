@@ -1,4 +1,4 @@
-SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v31"
+SUMMARY = "Greengrass Lite 2-Layer: Base + Greengrass v32"
 DESCRIPTION = "Multi-layer OCI with base (systemd+containers) and greengrass-lite in separate layers"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -8,7 +8,7 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r11"
+PR = "r12"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
@@ -164,6 +164,32 @@ python oci_layer_postprocess() {
             with open(entrypoint_script, 'w') as f:
                 f.write('#!/bin/sh\nmkdir -p /lib64\nln -sf /lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 2>/dev/null || true\nfor f in /var/lib/greengrass/ggl.*.service; do\n    [ -f "$f" ] && ln -sf "$f" /etc/systemd/system/\ndone\nexec /sbin/init systemd.unified_cgroup_hierarchy=1\n')
             os.chmod(entrypoint_script, 0o755)
+            
+            # Create systemd path unit to watch for new service files
+            greengrass_watcher_path = os.path.join(systemd_system_dir, 'greengrass-watcher.path')
+            with open(greengrass_watcher_path, 'w') as f:
+                f.write('[Unit]\n')
+                f.write('Description=Watch for new Greengrass service files\n\n')
+                f.write('[Path]\n')
+                f.write('PathChanged=/var/lib/greengrass\n')
+                f.write('Unit=greengrass-watcher.service\n\n')
+                f.write('[Install]\n')
+                f.write('WantedBy=multi-user.target\n')
+            
+            # Create systemd service to symlink new service files
+            greengrass_watcher_service = os.path.join(systemd_system_dir, 'greengrass-watcher.service')
+            with open(greengrass_watcher_service, 'w') as f:
+                f.write('[Unit]\n')
+                f.write('Description=Symlink new Greengrass service files\n\n')
+                f.write('[Service]\n')
+                f.write('Type=oneshot\n')
+                f.write('ExecStart=/bin/sh -c "for f in /var/lib/greengrass/ggl.*.service; do [ -f \\"$f\\" ] && ln -sf \\"$f\\" /etc/systemd/system/ && systemctl daemon-reload; done"\n')
+            
+            # Enable the path unit
+            multi_user_wants = os.path.join(systemd_system_dir, 'multi-user.target.wants')
+            bb.utils.mkdirhier(multi_user_wants)
+            os.symlink('/etc/systemd/system/greengrass-watcher.path', 
+                       os.path.join(multi_user_wants, 'greengrass-watcher.path'))
             
             # Mask systemd services
             systemd_system_dir = os.path.join(layer_rootfs, 'etc/systemd/system')
