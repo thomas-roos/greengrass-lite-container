@@ -8,15 +8,16 @@ do_rootfs[nostamp] = "1"
 do_image_oci[nostamp] = "1"
 
 # Increment this to force rebuild
-PR = "r16"
+PR = "r17"
 
 # Enable multi-layer mode
 OCI_LAYER_MODE = "multi"
 
-# 2 layers: base (systemd + containers + python) + greengrass (just greengrass-lite)
+# 2 layers: greengrass (just greengrass-lite) + base (systemd + containers + python)
+# Base layer is last so its /etc/passwd with ggcore UID=0 overlays on top
 OCI_LAYERS = "\
-    base:packages:usrmerge-compat+base-files+base-passwd+netbase+systemd+systemd-serialgetty+libcgroup+ca-certificates+podman+iptables+slirp4netns+python3-misc+python3-venv+python3-tomllib+python3-ensurepip+python3-pip+iputils-ping+crun \
     greengrass:packages:greengrass-lite \
+    base:packages:usrmerge-compat+base-files+base-passwd+netbase+systemd+systemd-serialgetty+libcgroup+ca-certificates+podman+iptables+slirp4netns+python3-misc+python3-venv+python3-tomllib+python3-ensurepip+python3-pip+iputils-ping+crun \
 "
 
 # Use standard paths with usrmerge
@@ -203,24 +204,8 @@ python oci_layer_postprocess() {
             
             bb.note(f"OCI: Configured base layer")
         
-        # Process greengrass layer
+        # Process greengrass layer (layer 1, bottom)
         if layer_name == 'greengrass':
-            # Remove dummy users created by greengrass-lite package
-            passwd_file = os.path.join(layer_rootfs, 'etc/passwd')
-            group_file = os.path.join(layer_rootfs, 'etc/group')
-            
-            if os.path.exists(passwd_file):
-                with open(passwd_file, 'r') as f:
-                    lines = [l for l in f if not l.startswith('dummyuser:') and not l.startswith('ggcore:') and not l.startswith('gg_component:')]
-                with open(passwd_file, 'w') as f:
-                    f.writelines(lines)
-            
-            if os.path.exists(group_file):
-                with open(group_file, 'r') as f:
-                    lines = [l for l in f if not l.startswith('dummygroup:') and not l.startswith('ggcore:') and not l.startswith('gg_component:')]
-                with open(group_file, 'w') as f:
-                    f.writelines(lines)
-            
             bb.note(f"OCI: Configured greengrass layer")
 }
 
